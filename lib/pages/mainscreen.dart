@@ -3,7 +3,9 @@ import 'homepage.dart';
 import 'profilepage.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final void Function(bool isDarkMode) toggleTheme;
+
+  const MainScreen({super.key, required this.toggleTheme});
 
   @override
   _MainScreenState createState() => _MainScreenState();
@@ -14,7 +16,9 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _pages = [
     const HomePage(),
-    const ProfilePage(),
+    ProfilePage(toggleTheme: (bool isDarkMode) {
+      // Aksi untuk toggle tema
+    }),
   ];
 
   void _onItemTapped(int index) {
@@ -47,7 +51,7 @@ class _MainScreenState extends State<MainScreen> {
               child: GestureDetector(
                 onTap: () {
                   setState(() {
-                    _selectedIndex = 1;
+                    _selectedIndex = 1; // Mengubah halaman ke ProfilePage
                   });
                 },
                 child: const CircleAvatar(
@@ -58,12 +62,10 @@ class _MainScreenState extends State<MainScreen> {
             ),
           ),
         ),
-
         body: Container(
-          color: Color(0xFFF8F5E9),
+          color: const Color(0xFFF8F5E9),
           child: _pages[_selectedIndex],
         ),
-
         bottomNavigationBar: Theme(
           data: Theme.of(context).copyWith(
             splashFactory: NoSplash.splashFactory, // Hilangkan efek klik
@@ -77,12 +79,12 @@ class _MainScreenState extends State<MainScreen> {
             onTap: _onItemTapped,
             items: const [
               BottomNavigationBarItem(
-                  icon: Icon(Icons.home),
-                  label: 'Home'
+                icon: Icon(Icons.home),
+                label: 'Home',
               ),
               BottomNavigationBarItem(
-                  icon: Icon(Icons.person),
-                  label: 'Profile'
+                icon: Icon(Icons.person),
+                label: 'Profile',
               ),
             ],
           ),

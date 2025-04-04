@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+  final void Function(bool isDarkMode) toggleTheme;
+
+  const ProfilePage({super.key, required this.toggleTheme});
 
   @override
   Widget build(BuildContext context) {
