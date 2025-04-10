@@ -5,10 +5,10 @@ class DummyData {
   static List<User> users = [
     User(
       id: '1',
-      username: 'Test User',
-      email: 'test@example.com',
+      username: 'Januarta',
+      email: 'janu@cookmate.com',
       password: 'password',
-      profileImageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
+      profileImageUrl: 'assets/images/profile1.jpg',
       bio: 'Food enthusiast and home cook. I love trying new recipes!',
     ),
     User(
@@ -49,7 +49,11 @@ class DummyData {
       cookTimeMinutes: 15,
       servings: 4,
       difficulty: 'Medium',
-      categories: ['Italia', 'Pasta', 'Cepat Saji'],
+      categories: [
+        'Italia',
+        'Pasta',
+        'Cepat Saji'
+      ],
     ),
     Recipe(
       id: '2',
@@ -86,7 +90,11 @@ class DummyData {
       cookTimeMinutes: 40,
       servings: 6,
       difficulty: 'Medium',
-      categories: ['India', 'Kari', 'Ayam'],
+      categories: [
+        'India',
+        'Kari',
+        'Ayam'
+      ],
     ),
     Recipe(
       id: '3',
@@ -113,7 +121,11 @@ class DummyData {
       cookTimeMinutes: 5,
       servings: 1,
       difficulty: 'EZ',
-      categories: ['Sarapan', 'Vegetarian', 'Cepat Saji'],
+      categories: [
+        'Sarapan',
+        'Vegetarian',
+        'Cepat Saji'
+      ],
     ),
     Recipe(
       id: '4',
@@ -146,7 +158,11 @@ class DummyData {
       cookTimeMinutes: 10,
       servings: 24,
       difficulty: 'EZ',
-      categories: ['Dessert', 'Membakar', 'Kue Kering'],
+      categories: [
+        'Dessert',
+        'Membakar',
+        'Kue Kering'
+      ],
     ),
   ];
 }
