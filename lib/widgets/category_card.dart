@@ -21,17 +21,17 @@ class CategoryCard extends StatelessWidget {
         return CupertinoColors.systemIndigo;
       case 'dessert':
         return CupertinoColors.systemPink;
-      case 'italian':
+      case 'italia':
         return CupertinoColors.systemRed;
-      case 'indian':
+      case 'india':
         return CupertinoColors.systemOrange;
       case 'vegetarian':
         return CupertinoColors.activeGreen;
-      case 'chicken':
+      case 'ayam':
         return CupertinoColors.systemBrown;
       case 'pasta':
         return CupertinoColors.systemOrange;
-      case 'curry':
+      case 'kari':
         return CupertinoColors.systemPurple;
       case 'baking':
         return CupertinoColors.systemYellow;
@@ -47,7 +47,7 @@ class CategoryCard extends StatelessWidget {
   // Get an icon based on the category name
   IconData _getCategoryIcon() {
     switch (title.toLowerCase()) {
-      case 'breakfast':
+      case 'sarapan':
         return CupertinoIcons.sun_max;
       case 'lunch':
         return CupertinoIcons.clock;
@@ -55,26 +55,26 @@ class CategoryCard extends StatelessWidget {
         return CupertinoIcons.moon;
       case 'dessert':
         return CupertinoIcons.snow;
-      case 'italian':
+      case 'italia':
         return CupertinoIcons.flag;
-      case 'indian':
+      case 'india':
         return CupertinoIcons.flag;
       case 'vegetarian':
         return CupertinoIcons.leaf_arrow_circlepath;
-      case 'chicken':
+      case 'ayam':
         return CupertinoIcons.paw;
       case 'pasta':
         return CupertinoIcons.circle_grid_hex;
-      case 'curry':
+      case 'kari':
         return CupertinoIcons.flame;
-      case 'baking':
+      case 'membakar':
         return CupertinoIcons.thermometer;
       case 'cookies':
         return CupertinoIcons.circle_grid_3x3;
-      case 'quick meals':
+      case 'cepat saji':
         return CupertinoIcons.timer;
       default:
-        return CupertinoIcons.square_list;
+        return CupertinoIcons.question;
     }
   }
 

@@ -32,7 +32,7 @@ class RecipeCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Recipe image
+            // recipe gambar
             Stack(
               children: [
                 AspectRatio(
