@@ -44,8 +44,6 @@ class _ProfilePageState extends State<ProfilePage> {
   void _toggleEdit() {
     setState(() {
       if (isEditing) {
-        // Save changes
-        // In a real app, you would update the user in your database
         currentUser = currentUser.copyWith(
           username: _usernameController.text,
           bio: _bioController.text,
@@ -95,7 +93,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ],
                           image: DecorationImage(
-                            image: NetworkImage(currentUser.profileImageUrl ?? 
+                            image: AssetImage(currentUser.profileImageUrl ?? 
                               'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3'),
                             fit: BoxFit.cover,
                           ),

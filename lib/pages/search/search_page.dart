@@ -101,7 +101,7 @@ class _SearchPageState extends State<SearchPage> {
   }
   
   Widget _buildSearchSuggestions() {
-    // Extract unique categories
+    
     final categories = <String>{};
     for (final recipe in DummyData.recipes) {
       categories.addAll(recipe.categories);

@@ -68,9 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Add some space at the top for the header actions
                         const SizedBox(height: 60),
-                        
                         Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Text(
@@ -82,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         // Stacked Recipe Cards
                         StackedRecipeCards(recipes: recipes),
                         
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 36),
                         
                         // Categories section
                         Padding(
@@ -134,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                                 onPressed: () {
-                                  // TODO: Navigate to all recipes
+                                  
                                 },
                               ),
                             ],
@@ -188,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   
-                  // Custom header with app title and profile picture
+                  // App Bar
                   Positioned(
                     top: 0,
                     left: 0,
@@ -229,7 +227,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   
                                 },
                               ),
-                              
                               // foto profile
                               GestureDetector(
                                 onTap: () {

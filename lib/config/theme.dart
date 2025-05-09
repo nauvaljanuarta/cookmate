@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 
 class AppTheme {
-  // App colors
+
   static const Color primaryColor = CupertinoColors.activeOrange;
   static const Color secondaryColor = CupertinoColors.systemYellow;
   static const Color backgroundColor = CupertinoColors.systemBackground;

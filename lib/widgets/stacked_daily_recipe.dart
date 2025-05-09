@@ -69,7 +69,7 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards> with SingleTick
     final currentDragX = details.localPosition.dx;
     final dragDifference = currentDragX - _dragStartX;
     
-    // Only allow right swipe
+    // hanya bisa slide ke kanan
     if (dragDifference > 0) {
       final dragPercentage = dragDifference / MediaQuery.of(context).size.width;
       _controller.value = dragPercentage.clamp(0.0, 1.0);
@@ -121,7 +121,7 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards> with SingleTick
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 9),
         SizedBox(
           height: 320,
           child: GestureDetector(
@@ -162,6 +162,7 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards> with SingleTick
     
     return Positioned(
       top: topOffset,
+      
       child: Transform.scale(
         scale: scale,
         child: GestureDetector(
@@ -250,7 +251,7 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards> with SingleTick
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
@@ -369,7 +370,7 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards> with SingleTick
                     ],
                   ),
                 ),
-              ],
+              ], 
             ),
           ),
         ),

@@ -1,5 +1,5 @@
+import 'package:cookmate2/pages/auth/login_page.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:cookmate2/pages/home/home_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:async';
 
@@ -16,7 +16,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     Timer(const Duration(seconds: 3), () {
       Navigator.of(context).pushReplacement(
-        CupertinoPageRoute(builder: (context) => const HomeScreen()),
+        CupertinoPageRoute(builder: (context) => const LoginPage()),
       );
     });
   }
