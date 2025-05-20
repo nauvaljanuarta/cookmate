@@ -1,11 +1,11 @@
 import 'package:flutter/cupertino.dart';
+import 'package:cookmate2/config/pocketbase_client.dart';
 import 'package:cookmate2/config/theme.dart';
-import 'package:cookmate2/data/dummy_data.dart';
+import 'package:cookmate2/services/user_service.dart';
+import 'package:cookmate2/pages/auth/login_page.dart';
 import 'package:cookmate2/models/user.dart';
-import 'package:cookmate2/models/recipe.dart';
-import 'package:cookmate2/widgets/recipe_card.dart';
-import 'package:cookmate2/pages/recipe/recipe_detail.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -15,25 +15,55 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  late User currentUser;
-  late List<Recipe> userRecipes;
+  User? currentUser;
   bool isEditing = false;
-  
+  bool isLoading = true;
+  String? errorMessage;
+
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
-  
+  final UserService _userService = UserService();
+
   @override
   void initState() {
     super.initState();
-    // In a real app, you would get the current user from authentication
-    currentUser = DummyData.users[0];
-    _usernameController.text = currentUser.username;
-    _bioController.text = currentUser.bio ?? '';
-    
-    // Filter recipes that would belong to this user (in a real app)
-    userRecipes = DummyData.recipes.take(2).toList();
+    print('ProfilePage: Auth store state: token=${PocketBaseClient.instance.authStore.token}, model=${PocketBaseClient.instance.authStore.model?.toJson()}');
+    _loadUserData();
   }
-  
+
+  Future<void> _loadUserData() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      currentUser = _userService.getCurrentUser();
+      if (currentUser == null) {
+        setState(() {
+          errorMessage = 'Silakan login untuk melihat profil';
+          isLoading = false;
+        });
+        print('ProfilePage: No user found');
+        return;
+      }
+
+      print('ProfilePage: Loaded currentUser: ${currentUser!.toJson()}');
+      _usernameController.text = currentUser!.username;
+      _bioController.text = currentUser!.bio;
+
+      setState(() {
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Gagal memuat data pengguna: $e';
+        isLoading = false;
+      });
+      print('ProfilePage: Error loading user data: $e');
+    }
+  }
+
   @override
   void dispose() {
     _usernameController.dispose();
@@ -41,32 +71,120 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
-  void _toggleEdit() {
-    setState(() {
-      if (isEditing) {
-        currentUser = currentUser.copyWith(
-          username: _usernameController.text,
-          bio: _bioController.text,
-        );
+  void _toggleEdit() async {
+    if (isEditing) {
+      if (_usernameController.text.isEmpty) {
+        _showAlert('Username tidak boleh kosong');
+        return;
       }
-      isEditing = !isEditing;
-    });
+
+      setState(() {
+        isLoading = true;
+      });
+
+      final data = {
+        'username': _usernameController.text,
+        'bio': _bioController.text,
+      };
+
+      final (success, error) = await _userService.updateUser(data);
+
+      setState(() {
+        isLoading = false;
+      });
+
+      if (success) {
+        setState(() {
+          isEditing = false;
+        });
+        _showAlert('Profil berhasil diperbarui');
+        await _loadUserData();
+      } else {
+        _showAlert(error ?? 'Gagal memperbarui profil');
+      }
+    } else {
+      setState(() {
+        isEditing = true;
+      });
+    }
+  }
+
+  void _logout() async {
+    _userService.logout();
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        CupertinoPageRoute(builder: (context) => const LoginPage()),
+        (route) => false,
+      );
+    }
+  }
+
+  void _showAlert(String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(isEditing && message.contains('berhasil') ? 'Sukses' : 'Error'),
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('OK'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const CupertinoPageScaffold(
+        child: Center(child: CupertinoActivityIndicator()),
+      );
+    }
+
+    if (errorMessage != null || currentUser == null) {
+      return CupertinoPageScaffold(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(errorMessage ?? 'Data pengguna tidak tersedia', style: AppTheme.bodyStyle),
+              const SizedBox(height: 16),
+              CupertinoButton(
+                child: const Text('Ke Halaman Login'),
+                onPressed: () {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    CupertinoPageRoute(builder: (context) => const LoginPage()),
+                    (route) => false,
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final profileImageUrl = currentUser!.profileImage != null && currentUser!.profileImage!.isNotEmpty
+        ? PocketBaseClient.instance.files.getUrl(
+            PocketBaseClient.instance.authStore.model as RecordModel,
+            currentUser!.profileImage!,
+          ).toString()
+        : null;
+
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        middle: const Text('Profile'),
+        middle: const Text('Profil'),
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
+          onPressed: isLoading ? null : _toggleEdit,
           child: Text(
-            isEditing ? 'Save' : 'Edit',
+            isEditing ? 'Simpan' : 'Edit',
             style: TextStyle(
               color: AppTheme.primaryColor,
             ),
           ),
-          onPressed: _toggleEdit,
         ),
       ),
       child: SafeArea(
@@ -76,7 +194,6 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Profile header
                 Center(
                   child: Column(
                     children: [
@@ -93,9 +210,13 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ],
                           image: DecorationImage(
-                            image: AssetImage(currentUser.profileImageUrl ?? 
-                              'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3'),
+                            image: NetworkImage(
+                              profileImageUrl ?? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3',
+                            ),
                             fit: BoxFit.cover,
+                            onError: (exception, stackTrace) {
+                              print('NetworkImage error: $exception');
+                            },
                           ),
                         ),
                       ),
@@ -108,7 +229,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               placeholder: 'Username',
                             )
                           : Text(
-                              currentUser.username,
+                              currentUser!.username,
                               style: AppTheme.subheadingStyle,
                             ),
                       const SizedBox(height: 8),
@@ -117,21 +238,18 @@ class _ProfilePageState extends State<ProfilePage> {
                               controller: _bioController,
                               textAlign: TextAlign.center,
                               style: AppTheme.captionStyle,
-                              placeholder: 'Add a bio',
+                              placeholder: 'Tambah bio',
                               maxLines: 3,
                             )
                           : Text(
-                              currentUser.bio ?? 'No bio yet',
+                              currentUser!.bio,
                               style: AppTheme.captionStyle,
                               textAlign: TextAlign.center,
                             ),
                     ],
                   ),
                 ),
-                
                 const SizedBox(height: 24),
-                
-                // Stats section
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -141,90 +259,42 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildStatItem('Recipes', '${userRecipes.length}'),
-                      _buildStatItem('Followers', '245'),
-                      _buildStatItem('Following', '86'),
+                      _buildStatItem('Resep', '0'),
+                      _buildStatItem('Pengikut', '245'),
+                      _buildStatItem('Mengikuti', '86'),
                     ],
                   ),
                 ),
-                
                 const SizedBox(height: 24),
-                
-                // My Recipes section
                 Text(
-                  'My Recipes',
+                  'Pengaturan',
                   style: AppTheme.subheadingStyle,
                 ),
                 const SizedBox(height: 12),
-                
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.75,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                  ),
-                  itemCount: userRecipes.length,
-                  itemBuilder: (context, index) {
-                    final recipe = userRecipes[index];
-                    return RecipeCard(
-                      recipe: recipe,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          CupertinoPageRoute(
-                            builder: (context) => RecipeDetailScreen(recipe: recipe),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Settings section
-                Text(
-                  'Settings',
-                  style: AppTheme.subheadingStyle,
-                ),
-                const SizedBox(height: 12),
-                
                 _buildSettingsItem(
                   icon: CupertinoIcons.person,
-                  title: 'Account',
-                  onTap: () {
-                    // Navigate to account settings
-                  },
+                  title: 'Akun',
+                  onTap: () {},
                 ),
                 _buildSettingsItem(
                   icon: CupertinoIcons.bell,
-                  title: 'Notifications',
-                  onTap: () {
-                    // Navigate to notifications settings
-                  },
+                  title: 'Notifikasi',
+                  onTap: () {},
                 ),
                 _buildSettingsItem(
                   icon: CupertinoIcons.lock,
-                  title: 'Privacy',
-                  onTap: () {
-                    // Navigate to privacy settings
-                  },
+                  title: 'Privasi',
+                  onTap: () {},
                 ),
                 _buildSettingsItem(
                   icon: CupertinoIcons.question_circle,
-                  title: 'Help & Support',
-                  onTap: () {
-                    // Navigate to help & support
-                  },
+                  title: 'Bantuan & Dukungan',
+                  onTap: () {},
                 ),
                 _buildSettingsItem(
                   icon: CupertinoIcons.arrow_right_square,
-                  title: 'Sign Out',
-                  onTap: () {
-                    // Sign out logic
-                  },
+                  title: 'Keluar',
+                  onTap: _logout,
                   showDivider: false,
                 ),
               ],
@@ -234,7 +304,7 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
-  
+
   Widget _buildStatItem(String label, String value) {
     return Column(
       children: [
@@ -258,7 +328,7 @@ class _ProfilePageState extends State<ProfilePage> {
       ],
     );
   }
-  
+
   Widget _buildSettingsItem({
     required IconData icon,
     required String title,

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:cookmate2/config/theme.dart';
 import 'package:cookmate2/pages/auth/register_page.dart';
 import 'package:cookmate2/pages/home/home_screen.dart';
+import 'package:cookmate2/services/user_service.dart';
 import 'package:flutter/material.dart';
 
 class LoginPage extends StatefulWidget {
@@ -17,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
   bool _rememberMe = false;
   bool _isLoading = false;
+  final UserService _userService = UserService();
 
   @override
   void dispose() {
@@ -36,20 +38,27 @@ class _LoginPageState extends State<LoginPage> {
       _isLoading = true;
     });
 
-    // Simulate login delay
-    await Future.delayed(const Duration(seconds: 2));
+    // Authenticate with backend
+    final (success, error) = await _userService.loginUser(
+      email: _emailController.text,
+      password: _passwordController.text,
+    );
 
-    // In a real app, you would authenticate with your backend here
-    // For now, we'll just navigate to the home screen
     if (mounted) {
       setState(() {
         _isLoading = false;
       });
-      
-      Navigator.of(context).pushAndRemoveUntil(
-        CupertinoPageRoute(builder: (context) => const HomeScreen()),
-        (route) => false,
-      );
+
+      if (success) {
+        print('LoginPage: Login successful, navigating to HomeScreen');
+        Navigator.of(context).pushAndRemoveUntil(
+          CupertinoPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
+      } else {
+        print('LoginPage: Login failed: $error');
+        _showAlert(error ?? 'Failed to login');
+      }
     }
   }
 
@@ -80,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 40),
-                
+
                 // Logo and app name
                 Center(
                   child: Column(
@@ -119,9 +128,9 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 48),
-                
+
                 // Login form
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,9 +160,9 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 20),
-                    
+
                     const Text(
                       'Password',
                       style: TextStyle(
@@ -195,9 +204,9 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Remember me and forgot password
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -246,9 +255,9 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 32),
-                    
+
                     // Login button
                     SizedBox(
                       width: double.infinity,
@@ -267,13 +276,14 @@ class _LoginPageState extends State<LoginPage> {
                                   fontFamily: 'Montserrat',
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
+                                  color: CupertinoColors.white,
                                 ),
                               ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Social login options
                     Column(
                       children: [
@@ -302,9 +312,9 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 24),
-                        
+
                         // Social login buttons
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -334,9 +344,9 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 32),
-                    
+
                     // Register link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,

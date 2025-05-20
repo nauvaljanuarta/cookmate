@@ -1,35 +1,35 @@
+import 'package:pocketbase/pocketbase.dart';
+
 class User {
   final String id;
-  final String username;
   final String email;
-  final String password; // Note: In a real app, you should never store plain text passwords
-  final String? profileImageUrl;
-  final String? bio;
+  final String username;
+  final String bio;
+  final String? profileImage;
 
   User({
     required this.id,
-    required this.username,
     required this.email,
-    required this.password,
-    this.profileImageUrl,
-    this.bio,
+    required this.username,
+    required this.bio,
+    this.profileImage,
   });
 
-  User copyWith({
-    String? id,
-    String? username,
-    String? email,
-    String? password,
-    String? profileImageUrl,
-    String? bio,
-  }) {
+  factory User.fromRecord(RecordModel record) {
     return User(
-      id: id ?? this.id,
-      username: username ?? this.username,
-      email: email ?? this.email,
-      password: password ?? this.password,
-      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
-      bio: bio ?? this.bio,
+      id: record.id,
+      email: record.getStringValue('email', ''),
+      username: record.getStringValue('username', ''),
+      bio: record.getStringValue('bio', ''),
+      profileImage: record.getStringValue('profileImage'),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'email': email,
+        'username': username,
+        'bio': bio,
+        'profileImage': profileImage,
+      };
 }

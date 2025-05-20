@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:cookmate2/config/theme.dart';
 import 'package:cookmate2/pages/auth/login_page.dart';
-import 'package:cookmate2/pages/home/home_screen.dart';
+import 'package:cookmate2/services/user_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -15,10 +17,14 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _bioController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _agreeToTerms = false;
   bool _isLoading = false;
+  File? _profileImage;
+
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void dispose() {
@@ -26,11 +32,25 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _bioController.dispose();
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        setState(() {
+          _profileImage = File(image.path);
+        });
+      }
+    } catch (e) {
+      _showAlert('Failed to pick image: $e');
+    }
+  }
+
   void _register() async {
-    // Validate inputs
+    // Validasi input lokal
     if (_nameController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _passwordController.text.isEmpty ||
@@ -53,20 +73,31 @@ class _RegisterPageState extends State<RegisterPage> {
       _isLoading = true;
     });
 
-    // Simulate registration delay
-    await Future.delayed(const Duration(seconds: 2));
+    // Panggil UserService untuk registrasi
+    final userService = UserService();
+    final (record, error) = await userService.registerUser(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      passwordConfirm: _confirmPasswordController.text,
+      username: _nameController.text.trim(),
+      bio: _bioController.text.trim(),
+      profileImage: _profileImage,
+    );
 
-    // In a real app, you would register with your backend here
-    // For now, we'll just navigate to the home screen
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-      
-      Navigator.of(context).pushAndRemoveUntil(
-        CupertinoPageRoute(builder: (context) => const HomeScreen()),
-        (route) => false,
-      );
+    setState(() {
+      _isLoading = false;
+    });
+
+    
+    if (record != null) {
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          CupertinoPageRoute(builder: (context) => const LoginPage()),
+          (route) => false,
+        );
+      }
+    } else {
+      _showAlert(error ?? 'Registration failed. Please check your input and try again.');
     }
   }
 
@@ -101,15 +132,13 @@ class _RegisterPageState extends State<RegisterPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 20),
-                
-                // Profile image upload
+
+                // Profile image picker
                 Center(
                   child: Column(
                     children: [
                       GestureDetector(
-                        onTap: () {
-                          // TODO: Implement image picker
-                        },
+                        onTap: _pickImage,
                         child: Container(
                           width: 100,
                           height: 100,
@@ -120,14 +149,22 @@ class _RegisterPageState extends State<RegisterPage> {
                               color: CupertinoColors.systemGrey4,
                               width: 1,
                             ),
+                            image: _profileImage != null
+                                ? DecorationImage(
+                                    image: FileImage(_profileImage!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
                           ),
-                          child: const Center(
-                            child: Icon(
-                              CupertinoIcons.camera,
-                              size: 40,
-                              color: CupertinoColors.systemGrey,
-                            ),
-                          ),
+                          child: _profileImage == null
+                              ? const Center(
+                                  child: Icon(
+                                    CupertinoIcons.camera,
+                                    size: 40,
+                                    color: CupertinoColors.systemGrey,
+                                  ),
+                                )
+                              : null,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -142,10 +179,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 32),
-                
-                // Registration form
+
+                // Form registrasi
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -173,9 +210,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 20),
-                    
+
                     const Text(
                       'Email',
                       style: TextStyle(
@@ -201,9 +238,37 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 20),
-                    
+
+                    const Text(
+                      'Bio',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    CupertinoTextField(
+                      controller: _bioController,
+                      placeholder: 'Tell us about yourself',
+                      padding: const EdgeInsets.all(16),
+                      maxLines: 3,
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.systemGrey6,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefix: const Padding(
+                        padding: EdgeInsets.only(left: 16),
+                        child: Icon(
+                          CupertinoIcons.pencil,
+                          color: CupertinoColors.systemGrey,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
                     const Text(
                       'Password',
                       style: TextStyle(
@@ -245,9 +310,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 20),
-                    
+
                     const Text(
                       'Confirm Password',
                       style: TextStyle(
@@ -289,10 +354,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
-                    // Terms and conditions
+
                     GestureDetector(
                       onTap: () {
                         setState(() {
@@ -325,10 +389,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 32),
-                    
-                    // Register button
+
                     SizedBox(
                       width: double.infinity,
                       child: CupertinoButton(
@@ -346,34 +409,26 @@ class _RegisterPageState extends State<RegisterPage> {
                                   fontFamily: 'Montserrat',
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
+                                  color: CupertinoColors.white,
                                 ),
                               ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
-                    // Login link
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          'Already have an account?',
+                          'Already have an account? ',
                           style: TextStyle(
                             fontFamily: 'Montserrat',
-                            color: CupertinoColors.systemGrey,
+                            fontSize: 14,
                           ),
                         ),
                         CupertinoButton(
-                          padding: const EdgeInsets.only(left: 4),
-                          child: Text(
-                            'Login',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryColor,
-                            ),
-                          ),
+                          padding: EdgeInsets.zero,
                           onPressed: () {
                             Navigator.of(context).pushReplacement(
                               CupertinoPageRoute(
@@ -381,6 +436,15 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                             );
                           },
+                          child: const Text(
+                            'Login',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 14,
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ],
                     ),

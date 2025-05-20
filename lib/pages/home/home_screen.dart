@@ -22,7 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final recipes = DummyData.recipes;
-    final currentUser = DummyData.users[0]; // Get the current user
+    // final currentUser = DummyData.users[0]; // Get the current user
     
     // Extract unique categories
     final categories = <String>{};
@@ -248,11 +248,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                         offset: const Offset(0, 2),
                                       ),
                                     ],
-                                    image: DecorationImage(
-                                      image: AssetImage(currentUser.profileImageUrl ?? 
-                                        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3'),
-                                      fit: BoxFit.cover,
-                                    ),
+                                    // image: DecorationImage(
+                                    //   image: AssetImage(currentUser.profileImageUrl ?? 
+                                    //     'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3'),
+                                    //   fit: BoxFit.cover,
+                                    // ),
                                   ),
                                 ),
                               ),
