@@ -35,12 +35,8 @@ class UserService {
     };
 
     try {
-      print('Mengirim request registrasi dengan body: $body');
       final record = await PocketBaseClient.instance.collection('users').create(body: body);
-      print('Registrasi berhasil, record: ${record.toJson()}');
-
       if (profileImage != null) {
-        print('Mengupload profile image: ${profileImage.path}');
         final updatedRecord = await PocketBaseClient.instance.collection('users').update(
           record.id,
           files: [
@@ -51,7 +47,6 @@ class UserService {
             ),
           ],
         );
-        print('Upload profile image berhasil: ${updatedRecord.toJson()}');
       }
 
       try {
@@ -83,15 +78,11 @@ class UserService {
     required String password,
   }) async {
     try {
-      print('Mengirim request login untuk: $email');
       final authData = await PocketBaseClient.instance.collection('users').authWithPassword(email, password);
-      print('Login berhasil, token: ${authData.token}, user: ${authData.record.toJson()}');
 
-      // Simpan ke authStore dan SharedPreferences
       PocketBaseClient.instance.authStore.save(authData.token, authData.record);
       await _saveAuthToken(authData.token, authData.record);
 
-      print('Auth store after login: token=${PocketBaseClient.instance.authStore.token}, model=${PocketBaseClient.instance.authStore.model?.toJson()}');
       return (authData.token.isNotEmpty, null);
     } catch (e) {
       print('Error saat login: $e');

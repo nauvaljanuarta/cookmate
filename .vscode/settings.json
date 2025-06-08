@@ -1,4 +1,5 @@
 {
   "java.compile.nullAnalysis.mode": "disabled",
-  "java.configuration.updateBuildConfiguration": "interactive"
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "cmake.sourceDirectory": "C:/Folder Janu/Assignment/MK PRODI/SEM 4/Mobile App - Praktikum/cookmate2/windows/runner"
 }

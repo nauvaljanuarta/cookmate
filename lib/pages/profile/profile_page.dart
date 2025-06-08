@@ -211,7 +211,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ],
                           image: DecorationImage(
                             image: NetworkImage(
-                              profileImageUrl ?? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3',
+                              profileImageUrl ?? 'https://placehold.co/300?text=unknown&font=poppins',
                             ),
                             fit: BoxFit.cover,
                             onError: (exception, stackTrace) {

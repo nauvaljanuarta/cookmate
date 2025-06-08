@@ -5,7 +5,6 @@ import 'package:cookmate2/pages/recipe/recipe_detail.dart';
 import 'package:cookmate2/widgets/category_card.dart';
 import 'package:cookmate2/widgets/recipe_card.dart';
 import 'package:cookmate2/widgets/stacked_daily_recipe.dart';
-import 'package:cookmate2/pages/splash_screen.dart';
 import 'package:cookmate2/pages/search/search_page.dart';
 import 'package:cookmate2/pages/profile/profile_page.dart';
 
@@ -22,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final recipes = DummyData.recipes;
-    // final currentUser = DummyData.users[0]; // Get the current user
+  
     
     // Extract unique categories
     final categories = <String>{};
@@ -49,6 +48,10 @@ class _HomeScreenState extends State<HomeScreen> {
               BottomNavigationBarItem(
                 icon: Icon(CupertinoIcons.search, size: 22.0),
                 label: 'Explore',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.plus_circle_fill, size: 22.0),
+                label: 'Add Meal',
               ),
               BottomNavigationBarItem(
                 icon: Icon(CupertinoIcons.bookmark, size: 22.0),
@@ -169,19 +172,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             );
                           },
                         ),
-                        const SizedBox(height: 24),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: CupertinoButton.filled(
-                            child: const Text('splash'), 
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                CupertinoPageRoute(builder: (_) => const SplashScreen()),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
@@ -267,6 +257,13 @@ class _HomeScreenState extends State<HomeScreen> {
             } else if (index == 1) {  
               return const SearchPage();
             } else if (index == 2) {
+              return Center(
+                child: Text(
+                  'Add Meal',
+                  style: AppTheme.bodyStyle,
+                ),
+              );
+            } else if (index == 3) {
               return Center(
                 child: Text(
                   'Saved Tab',

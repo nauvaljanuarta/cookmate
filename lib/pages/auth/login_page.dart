@@ -1,9 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cookmate2/config/theme.dart';
 import 'package:cookmate2/pages/auth/register_page.dart';
 import 'package:cookmate2/pages/home/home_screen.dart';
 import 'package:cookmate2/services/user_service.dart';
-import 'package:flutter/material.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -28,7 +29,6 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _login() async {
-    // Validate inputs
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       _showAlert('Please fill in all fields');
       return;
@@ -38,8 +38,10 @@ class _LoginPageState extends State<LoginPage> {
       _isLoading = true;
     });
 
-    // Authenticate with backend
-    final (success, error) = await _userService.loginUser(
+    final (
+      success,
+      error
+    ) = await _userService.loginUser(
       email: _emailController.text,
       password: _passwordController.text,
     );
@@ -90,21 +92,22 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 const SizedBox(height: 40),
 
-                // Logo and app name
                 Center(
                   child: Column(
                     children: [
                       Container(
-                        width: 80,
-                        height: 80,
+                        width: 100,
+                        height: 100,
                         decoration: BoxDecoration(
                           color: AppTheme.primaryColor.withOpacity(0.2),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
-                          CupertinoIcons.flame,
-                          size: 40,
-                          color: AppTheme.primaryColor,
+                        alignment: Alignment.center,
+                        child: SvgPicture.asset(
+                          'assets/images/splash.svg',
+                          width: 70, 
+                          height: 70,
+                          color: CupertinoColors.systemOrange, 
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -196,9 +199,7 @@ class _LoginPageState extends State<LoginPage> {
                             });
                           },
                           child: Icon(
-                            _obscurePassword
-                                ? CupertinoIcons.eye
-                                : CupertinoIcons.eye_slash,
+                            _obscurePassword ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
                             color: CupertinoColors.systemGrey,
                           ),
                         ),
@@ -220,12 +221,8 @@ class _LoginPageState extends State<LoginPage> {
                           child: Row(
                             children: [
                               Icon(
-                                _rememberMe
-                                    ? CupertinoIcons.checkmark_square_fill
-                                    : CupertinoIcons.square,
-                                color: _rememberMe
-                                    ? AppTheme.primaryColor
-                                    : CupertinoColors.systemGrey,
+                                _rememberMe ? CupertinoIcons.checkmark_square_fill : CupertinoIcons.square,
+                                color: _rememberMe ? AppTheme.primaryColor : CupertinoColors.systemGrey,
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
