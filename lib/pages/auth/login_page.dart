@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cookmate2/config/theme.dart';
-import 'package:cookmate2/pages/auth/register_page.dart';
-import 'package:cookmate2/pages/home/home_screen.dart';
 import 'package:cookmate2/services/user_service.dart';
+import 'package:cookmate2/pages/auth/register_page.dart';
+import 'package:cookmate2/pages/home/home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -54,7 +54,7 @@ class _LoginPageState extends State<LoginPage> {
       if (success) {
         print('LoginPage: Login successful, navigating to HomeScreen');
         Navigator.of(context).pushAndRemoveUntil(
-          CupertinoPageRoute(builder: (context) => const HomeScreen()),
+          CupertinoPageRoute(builder: (context) => const HomePage()),
           (route) => false,
         );
       } else {

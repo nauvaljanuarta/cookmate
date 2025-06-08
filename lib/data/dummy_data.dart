@@ -1,13 +1,14 @@
 import 'package:cookmate2/models/recipe.dart';
 
 class DummyData {
-
   static List<Recipe> recipes = [
     Recipe(
       id: '1',
       title: 'Spaghetti Carbonara',
       description: 'Hidangan pasta Italia dengan telur, keju, dan pancetta.',
       imageUrl: 'https://images.unsplash.com/photo-1588013273468-315fd88ea34c?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      authorName: 'Chef Giovanni',
+      authorImageUrl: 'https://i.pravatar.cc/150?u=chefgiovanni',
       ingredients: [
         '350g spaghetti',
         '150g pancetta atau guanciale, potong dadu',
@@ -30,17 +31,15 @@ class DummyData {
       cookTimeMinutes: 15,
       servings: 4,
       difficulty: 'Medium',
-      categories: [
-        'Italia',
-        'Pasta',
-        'Cepat Saji'
-      ],
+      categories: ['Italia', 'Pasta', 'Cepat Saji'],
     ),
     Recipe(
       id: '2',
       title: 'Chicken Tikka Masala',
       description: 'Potongan ayam panggang dalam saus tomat berbumbu krim.',
       imageUrl: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1674&q=80',
+      authorName: 'Priya Sharma',
+      authorImageUrl: 'https://i.pravatar.cc/150?u=priyasharma',
       ingredients: [
         '800g paha ayam tanpa tulang, potong kotak',
         '2 cangkir yogurt plain',
@@ -71,17 +70,15 @@ class DummyData {
       cookTimeMinutes: 40,
       servings: 6,
       difficulty: 'Medium',
-      categories: [
-        'India',
-        'Kari',
-        'Ayam'
-      ],
+      categories: ['India', 'Kari', 'Ayam'],
     ),
     Recipe(
       id: '3',
       title: 'Roti Panggang Alpukat',
       description: 'Sarapan sederhana dan bergizi dengan alpukat yang dihaluskan di atas roti panggang.',
       imageUrl: 'https://images.unsplash.com/photo-1588137378633-dea1336ce1e2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80',
+      authorName: 'Healthy Bites',
+      authorImageUrl: 'https://i.pravatar.cc/150?u=healthybites',
       ingredients: [
         '2 potong roti gandum utuh',
         '1 buah alpukat matang',
@@ -102,17 +99,15 @@ class DummyData {
       cookTimeMinutes: 5,
       servings: 1,
       difficulty: 'EZ',
-      categories: [
-        'Sarapan',
-        'Vegetarian',
-        'Cepat Saji'
-      ],
+      categories: ['Sarapan', 'Vegetarian', 'Cepat Saji'],
     ),
     Recipe(
       id: '4',
       title: 'Kue Cokelat Chip',
       description: 'Kue rumahan klasik dengan cokelat chip dan tekstur tengah yang lembut.',
       imageUrl: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80',
+      authorName: 'Granny\'s Kitchen',
+      authorImageUrl: 'https://i.pravatar.cc/150?u=grannyskitchen',
       ingredients: [
         '225g mentega tawar, suhu ruang',
         '200g gula merah',
@@ -139,11 +134,7 @@ class DummyData {
       cookTimeMinutes: 10,
       servings: 24,
       difficulty: 'EZ',
-      categories: [
-        'Dessert',
-        'Membakar',
-        'Kue Kering'
-      ],
+      categories: ['Dessert', 'Membakar', 'Kue Kering'],
     ),
   ];
 }

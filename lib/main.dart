@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:cookmate2/config/theme.dart';
-import 'package:cookmate2/pages/home/home_screen.dart';
+import 'package:cookmate2/pages/home/home_page.dart';
 import 'package:cookmate2/pages/splash_screen.dart';
 
 void main() {
@@ -18,7 +18,7 @@ class CookmateApp extends StatelessWidget {
       theme: AppTheme.cupertinoTheme,
       home: const SplashScreen(),
       routes: {
-        '/home': (context) => const HomeScreen(),
+        '/home': (context) => const HomePage(),
       },
     );
   }

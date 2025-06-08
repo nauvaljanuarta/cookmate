@@ -1,9 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:cookmate2/config/pocketbase_client.dart';
 import 'package:cookmate2/config/theme.dart';
+import 'package:cookmate2/models/user.dart';
 import 'package:cookmate2/services/user_service.dart';
 import 'package:cookmate2/pages/auth/login_page.dart';
-import 'package:cookmate2/models/user.dart';
+import 'package:cookmate2/pages/profile/recipes_page.dart'; 
 import 'package:flutter/material.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -274,7 +275,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 _buildSettingsItem(
                   icon: CupertinoIcons.book,
                   title: 'My Recipes',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(
+                        builder: (context) => const RecipesPage(),
+                      ),
+                    );
+                  },
                 ),
                 _buildSettingsItem(
                   icon: CupertinoIcons.bell,

@@ -236,7 +236,7 @@ class _SearchPageState extends State<SearchPage> {
                 onTap: () {
                   Navigator.of(context).push(
                     CupertinoPageRoute(
-                      builder: (context) => RecipeDetailScreen(recipe: recipe),
+                      builder: (context) => RecipeDetail(recipe: recipe),
                     ),
                   );
                 },
@@ -302,7 +302,7 @@ class _SearchPageState extends State<SearchPage> {
               onTap: () {
                 Navigator.of(context).push(
                   CupertinoPageRoute(
-                    builder: (context) => RecipeDetailScreen(recipe: recipe),
+                    builder: (context) => RecipeDetail(recipe: recipe),
                   ),
                 );
               },

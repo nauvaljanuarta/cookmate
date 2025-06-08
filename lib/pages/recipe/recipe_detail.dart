@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:cookmate2/models/recipe.dart';
 
-class RecipeDetailScreen extends StatelessWidget {
+class RecipeDetail extends StatelessWidget {
   final Recipe recipe;
 
-  const RecipeDetailScreen({
+  const RecipeDetail({
     super.key,
     required this.recipe,
   });
