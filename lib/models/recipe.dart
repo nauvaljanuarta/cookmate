@@ -34,20 +34,19 @@ class Recipe {
     this.isFavorite = false,
   });
 
-  // Factory constructor untuk membuat objek Recipe dari RecordModel PocketBase.
   factory Recipe.fromRecord(RecordModel record) {
     final data = record.data;
-    
-    // Mengambil data kategori
-    final categoryRecords = record.get<List<RecordModel>>('expand.category_id');
-    final categoryName = categoryRecords.isNotEmpty
-        ? categoryRecords.first.getStringValue('name')
-        : 'Uncategorized';
 
-    // Mengambil data pengguna (pembuat resep) dari relasi 'user_id'.
-    final userRecords = record.get<List<RecordModel>>('expand.user_id');
+    String categoryName = 'Uncategorized';
+    final categoryRecords = record.get<List<RecordModel>>('expand.category_id');
+    if (categoryRecords.isNotEmpty) {
+      categoryName = categoryRecords.first.getStringValue('name');
+    }
+
+    // Mengambil data pembuat resep (author)
     String authorName = 'Unknown Author';
     String authorImageUrl = 'https://placehold.co/100?text=?';
+    final userRecords = record.get<List<RecordModel>>('expand.user_id');
     if (userRecords.isNotEmpty) {
       final userRecord = userRecords.first;
       authorName = userRecord.getStringValue('username');
@@ -57,7 +56,7 @@ class Recipe {
       }
     }
     
-    // Membuat URL untuk gambar resep.
+    // Membuat URL untuk gambar resep
     String imageUrl;
     if (data['image'] != null && data['image'].isNotEmpty) {
       imageUrl = PocketBaseClient.instance.files.getUrl(record, data['image']).toString();
@@ -65,7 +64,7 @@ class Recipe {
       imageUrl = 'https://placehold.co/600x400?text=No+Image';
     }
 
-    // Membersihkan tag HTML dari deskripsi.
+    // Membersihkan tag HTML dari deskripsi
     String description = data['description'] ?? 'No Description';
     final RegExp htmlTags = RegExp(r'<[^>]*>');
     description = description.replaceAll(htmlTags, '').replaceAll('&nbsp;', ' ').trim();

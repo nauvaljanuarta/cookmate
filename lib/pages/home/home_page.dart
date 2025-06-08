@@ -37,20 +37,19 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _loadData() {
-    // PERBAIKAN: Inisialisasi Future dilakukan di sini.
     _allRecipesFuture = _recipeService.getAllRecipes();
     _dailyRecipesFuture = _recipeService.getAllRecipes(limit: 3);
 
-    // PERBAIKAN: Data pengguna dimuat langsung tanpa memanggil setState
-    // di dalam initState, yang dapat menyebabkan race condition.
     final user = _userService.getCurrentUser();
     if (user != null) {
       currentUser = user;
       if (user.profileImage != null && user.profileImage!.isNotEmpty) {
-        profileImageUrl = PocketBaseClient.instance.files.getUrl(
-          PocketBaseClient.instance.authStore.model!,
-          user.profileImage!,
-        ).toString();
+        profileImageUrl = PocketBaseClient.instance.files
+            .getUrl(
+              PocketBaseClient.instance.authStore.model!,
+              user.profileImage!,
+            )
+            .toString();
       }
     }
   }
@@ -61,6 +60,8 @@ class _HomePageState extends State<HomePage> {
       child: SafeArea(
         child: CupertinoTabScaffold(
           tabBar: CupertinoTabBar(
+            backgroundColor: CupertinoTheme.of(context).scaffoldBackgroundColor,
+            border: const Border(top: BorderSide(color: Colors.transparent)),
             currentIndex: _selectedIndex,
             onTap: (index) {
               setState(() {
@@ -112,26 +113,21 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 70), // Ruang untuk app bar kustom
+              const SizedBox(height: 60), 
               const Padding(
                 padding: EdgeInsets.all(16.0),
-                child:
-                    Text('Masak Apa yaa hari ini?', style: AppTheme.headingStyle),
+                child: Text('Masak Apa yaa hari ini?', style: AppTheme.headingStyle),
               ),
               FutureBuilder<List<Recipe>>(
                 future: _dailyRecipesFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const SizedBox(
-                        height: 320,
-                        child: Center(child: CupertinoActivityIndicator()));
+                    return const SizedBox(height: 320, child: Center(child: CupertinoActivityIndicator()));
                   }
                   if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                     return StackedRecipeCards(recipes: snapshot.data!);
                   }
-                  return const SizedBox(
-                      height: 320,
-                      child: Center(child: Text("No daily recipes.")));
+                  return const SizedBox(height: 320, child: Center(child: Text("No daily recipes.")));
                 },
               ),
               const SizedBox(height: 36),
@@ -146,23 +142,11 @@ class _HomePageState extends State<HomePage> {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   scrollDirection: Axis.horizontal,
                   children: [
-                    CategoryCard(
-                        title: 'Breakfast',
-                        imageUrl:
-                            'https://images.unsplash.com/photo-1525351484163-7529414344d8',
-                        onTap: () {}),
+                    CategoryCard(title: 'Breakfast', imageUrl: 'https://images.unsplash.com/photo-1525351484163-7529414344d8', onTap: () {}),
                     const SizedBox(width: 16),
-                    CategoryCard(
-                        title: 'Lunch',
-                        imageUrl:
-                            'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe',
-                        onTap: () {}),
+                    CategoryCard(title: 'Lunch', imageUrl: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe', onTap: () {}),
                     const SizedBox(width: 16),
-                    CategoryCard(
-                        title: 'Dinner',
-                        imageUrl:
-                            'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2',
-                        onTap: () {}),
+                    CategoryCard(title: 'Dinner', imageUrl: 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2', onTap: () {}),
                   ],
                 ),
               ),
@@ -172,14 +156,10 @@ class _HomePageState extends State<HomePage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Featured Recipes',
-                        style: AppTheme.subheadingStyle),
+                    const Text('Featured Recipes', style: AppTheme.subheadingStyle),
                     CupertinoButton(
                       padding: EdgeInsets.zero,
-                      child: const Text('See All',
-                          style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              color: AppTheme.primaryColor)),
+                      child: const Text('See All', style: TextStyle(fontFamily: 'Montserrat', color: AppTheme.primaryColor)),
                       onPressed: () {},
                     ),
                   ],
@@ -192,21 +172,17 @@ class _HomePageState extends State<HomePage> {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CupertinoActivityIndicator());
                   }
-                  if (snapshot.hasError ||
-                      !snapshot.hasData ||
-                      snapshot.data!.isEmpty) {
-                    return const Center(
-                        child: Text('No featured recipes found.'));
+                  if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text('No featured recipes found.'));
                   }
                   final recipes = snapshot.data!;
                   return GridView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      childAspectRatio: 0.70,
+                      childAspectRatio: 0.57,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
                     ),
@@ -216,9 +192,7 @@ class _HomePageState extends State<HomePage> {
                       return RecipeCard(
                         recipe: recipe,
                         onTap: () {
-                          Navigator.of(context).push(CupertinoPageRoute(
-                              builder: (context) =>
-                                  RecipeDetail(recipe: recipe)));
+                          Navigator.of(context).push(CupertinoPageRoute(builder: (context) => RecipeDetail(recipe: recipe)));
                         },
                       );
                     },
@@ -236,45 +210,34 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildCustomAppBar(BuildContext context) {
     return Positioned(
-      top: 0,
+      top: -5,
       left: 0,
       right: 0,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.background.withOpacity(0.95),
+          color: CupertinoTheme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(20.0),
+            bottomRight: Radius.circular(20.0),
+          ),
           boxShadow: [
-            BoxShadow(
-                color: CupertinoColors.systemGrey.withOpacity(0.1),
-                blurRadius: 4,
-                offset: const Offset(0, 2))
+            BoxShadow(color: CupertinoColors.lightBackgroundGray, blurRadius: 4, offset: const Offset(0, 2))
           ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Cookmate',
-                style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold)),
+            const Text('Cookmate', style: TextStyle(fontFamily: 'Montserrat', fontSize: 20, fontWeight: FontWeight.bold)),
             Row(
               children: [
-                CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    child: const Icon(CupertinoIcons.heart),
-                    onPressed: () {}),
                 GestureDetector(
                   onTap: () => setState(() => _selectedIndex = 4),
                   child: CircleAvatar(
                     radius: 18,
-                    backgroundImage: profileImageUrl != null
-                        ? NetworkImage(profileImageUrl!)
-                        : null,
+                    backgroundImage: profileImageUrl != null ? NetworkImage(profileImageUrl!) : null,
                     backgroundColor: CupertinoColors.systemGrey5,
-                    child: profileImageUrl == null
-                        ? const Icon(CupertinoIcons.person_fill, size: 20)
-                        : null,
+                    child: profileImageUrl == null ? const Icon(CupertinoIcons.person_fill, size: 20) : null,
                   ),
                 ),
               ],

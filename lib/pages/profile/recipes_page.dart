@@ -19,20 +19,14 @@ class _RecipesPageState extends State<RecipesPage> {
   @override
   void initState() {
     super.initState();
-    _loadUserRecipes();
-  }
-
-  void _loadUserRecipes() {
+    // PERBAIKAN: Logika pemuatan data dipindahkan langsung ke dalam initState
+    // tanpa menggunakan setState. FutureBuilder akan menangani pembaruan UI.
     final userId = PocketBaseClient.instance.authStore.model?.id;
     if (userId != null) {
-      setState(() {
-        _userRecipesFuture = _recipeService.getUserRecipes(userId);
-      });
+      _userRecipesFuture = _recipeService.getUserRecipes(userId);
     } else {
-      // Jika tidak ada user yang login, tampilkan daftar kosong.
-      setState(() {
-        _userRecipesFuture = Future.value([]);
-      });
+      // Jika tidak ada pengguna yang login, langsung berikan Future dengan list kosong.
+      _userRecipesFuture = Future.value([]);
     }
   }
 

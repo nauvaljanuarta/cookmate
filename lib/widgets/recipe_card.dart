@@ -22,7 +22,7 @@ class RecipeCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8.0),
+        // PERBAIKAN: Menghapus margin vertikal agar bisa diatur oleh Padding di ListView
         decoration: BoxDecoration(
           color: CupertinoColors.white,
           borderRadius: BorderRadius.circular(20),
@@ -39,7 +39,9 @@ class RecipeCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // PERBAIKAN: Kembali menggunakan tinggi tetap agar kompatibel dengan ListView.
             _buildRecipeImage(),
+            // Bagian teks tidak lagi dibungkus Expanded.
             _buildRecipeTextDetails(),
           ],
         ),
@@ -52,7 +54,8 @@ class RecipeCard extends StatelessWidget {
       children: [
         SizedBox(
           width: double.infinity,
-          height: 200,
+          // PERBAIKAN: Memberi tinggi yang pasti pada gambar.
+          height: 180, 
           child: Image.network(
             recipe.imageUrl,
             fit: BoxFit.cover,
@@ -107,9 +110,6 @@ class RecipeCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: CupertinoColors.white,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(color: CupertinoColors.black.withOpacity(0.1), blurRadius: 5, offset: const Offset(0, 2)),
-                ],
               ),
               child: Icon(
                 isFavorite ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
