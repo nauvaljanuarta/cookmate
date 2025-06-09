@@ -19,13 +19,10 @@ class _RecipesPageState extends State<RecipesPage> {
   @override
   void initState() {
     super.initState();
-    // PERBAIKAN: Logika pemuatan data dipindahkan langsung ke dalam initState
-    // tanpa menggunakan setState. FutureBuilder akan menangani pembaruan UI.
     final userId = PocketBaseClient.instance.authStore.model?.id;
     if (userId != null) {
       _userRecipesFuture = _recipeService.getUserRecipes(userId);
     } else {
-      // Jika tidak ada pengguna yang login, langsung berikan Future dengan list kosong.
       _userRecipesFuture = Future.value([]);
     }
   }
@@ -39,17 +36,14 @@ class _RecipesPageState extends State<RecipesPage> {
       child: FutureBuilder<List<Recipe>>(
         future: _userRecipesFuture,
         builder: (context, snapshot) {
-          // Tampilkan indikator loading saat data sedang diambil.
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CupertinoActivityIndicator());
           }
 
-          // Tampilkan pesan error jika terjadi masalah.
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
 
-          // Jika tidak ada data atau data kosong, tampilkan pesan.
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(
               child: Text(

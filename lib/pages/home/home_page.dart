@@ -78,8 +78,8 @@ class _HomePageState extends State<HomePage> {
                   icon: Icon(CupertinoIcons.plus_circle_fill, size: 22.0),
                   label: 'Add Meal'),
               BottomNavigationBarItem(
-                  icon: Icon(CupertinoIcons.bookmark, size: 22.0),
-                  label: 'Saved'),
+                  icon: Icon(CupertinoIcons.collections, size: 22.0),
+                  label: 'Meals Plan'),
               BottomNavigationBarItem(
                   icon: Icon(CupertinoIcons.person, size: 22.0),
                   label: 'Profile'),
@@ -94,7 +94,7 @@ class _HomePageState extends State<HomePage> {
               case 2:
                 return const Center(child: Text('Add Meal Tab'));
               case 3:
-                return const Center(child: Text('Saved Tab'));
+                return const Center(child: Text('Meals Plan'));
               case 4:
                 return const ProfilePage();
               default:
@@ -232,7 +232,7 @@ class _HomePageState extends State<HomePage> {
             Row(
               children: [
                 GestureDetector(
-                  onTap: () => setState(() => _selectedIndex = 4),
+                  onTap: () => ProfilePage(),
                   child: CircleAvatar(
                     radius: 18,
                     backgroundImage: profileImageUrl != null ? NetworkImage(profileImageUrl!) : null,
