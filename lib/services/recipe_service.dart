@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
 import 'package:pocketbase/pocketbase.dart';
 
-// Model untuk menampung input bahan dari UI
+// Model for ingredient input from UI
 class IngredientInput {
   final String name;
   final String quantity;
@@ -18,7 +18,6 @@ class IngredientInput {
 
 class RecipeService {
   final PocketBase _pb = PocketBaseClient.instance;
-
 
   Future<RecordModel> createCategory(String name) async {
     try {
@@ -46,7 +45,7 @@ class RecipeService {
     try {
       final records = await _pb.collection('meals').getFullList(
             filter: 'user_id = "$userId"',
-            expand: 'user_id, category_id', 
+            expand: 'user_id,category_id',
           );
       return records.map((record) => Recipe.fromRecord(record)).toList();
     } catch (e) {
@@ -61,7 +60,7 @@ class RecipeService {
             page: 1,
             perPage: limit,
             sort: '-created',
-            expand: 'user_id, category_id',
+            expand: 'user_id,category_id',
           );
       return result.items.map((record) => Recipe.fromRecord(record)).toList();
     } catch (e) {
@@ -100,38 +99,45 @@ class RecipeService {
     required List<String> instructions,
     File? imageFile,
   }) async {
+    if (!_pb.authStore.isValid) {
+      throw Exception("User is not authenticated.");
+    }
     final userId = _pb.authStore.model.id;
 
     final mealBody = <String, dynamic>{
       "name": name,
       "description": description,
       "times": int.tryParse(prepTime.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
-      "difiiculty": difficulty,
+      "difficulty": difficulty,
       "user_id": userId,
-      "category_id": categoryIds,
+      "category_id": categoryIds.isNotEmpty ? categoryIds.first : "",
     };
 
     List<http.MultipartFile> files = [];
     if (imageFile != null) {
+      final fileSize = await imageFile.length();
+      if (fileSize > 5 * 1024 * 1024) {
+        throw Exception("Image file size exceeds 5MB limit.");
+      }
       files.add(http.MultipartFile.fromBytes(
         'image',
         await imageFile.readAsBytes(),
         filename: basename(imageFile.path),
       ));
     }
-    
+
     final newMealRecord = await _pb.collection('meals').create(body: mealBody, files: files);
     final newMealId = newMealRecord.id;
 
     for (int i = 0; i < instructions.length; i++) {
-        if(instructions[i].isNotEmpty){
-            final stepBody = {
-                "meal_id": newMealId,
-                "description": instructions[i],
-                "number": i + 1,
-            };
-            await _pb.collection('steps').create(body: stepBody);
-        }
+      if (instructions[i].isNotEmpty) {
+        final stepBody = {
+          "meal_id": newMealId,
+          "description": instructions[i],
+          "number": i + 1,
+        };
+        await _pb.collection('steps').create(body: stepBody);
+      }
     }
 
     for (final ingredientInput in ingredients) {
@@ -151,7 +157,7 @@ class RecipeService {
       final mealIngredientBody = {
         "meal_id": newMealId,
         "ingredient_id": ingredientId,
-        "quantitiy": double.tryParse(ingredientInput.quantity) ?? 0,
+        "quantity": double.tryParse(ingredientInput.quantity) ?? 0,
         "unit": ingredientInput.unit.trim(),
       };
       await _pb.collection('meal_ingredient').create(body: mealIngredientBody);
