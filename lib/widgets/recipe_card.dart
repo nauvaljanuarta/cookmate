@@ -130,7 +130,6 @@ class RecipeCard extends StatelessWidget {
             recipe.description,
             style: const TextStyle(fontFamily: 'Montserrat', fontSize: 14, color: CupertinoColors.systemGrey),
             maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 12),
           const Divider(color: CupertinoColors.systemGrey5),
@@ -145,7 +144,7 @@ class RecipeCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'By ${recipe.authorName}',
+                  'recipe.authorName',
                   style: const TextStyle(fontFamily: 'Montserrat', fontSize: 12, color: CupertinoColors.systemGrey),
                   overflow: TextOverflow.ellipsis,
                 ),
