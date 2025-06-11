@@ -1,14 +1,13 @@
+import 'package:cookmate2/config/theme.dart';
 import 'package:flutter/cupertino.dart';
 
 class CategoryCard extends StatelessWidget {
   final String title;
-  final String imageUrl;
   final VoidCallback onTap;
 
   const CategoryCard({
     super.key,
     required this.title,
-    required this.imageUrl,
     required this.onTap,
   });
 
@@ -17,26 +16,23 @@ class CategoryCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 150,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        margin: const EdgeInsets.only(right: 12), // Jarak antar pill
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          image: DecorationImage(
-            image: NetworkImage(imageUrl),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              CupertinoColors.black.withOpacity(0.3),
-              BlendMode.darken,
-            ),
+          color: AppTheme.primaryColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppTheme.primaryColor.withOpacity(0.3),
+            width: 1,
           ),
         ),
         child: Center(
           child: Text(
             title,
             style: const TextStyle(
-              color: CupertinoColors.white,
+              color: AppTheme.primaryColor,
               fontFamily: 'Montserrat',
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),

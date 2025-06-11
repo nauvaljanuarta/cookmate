@@ -7,52 +7,20 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
 import 'package:pocketbase/pocketbase.dart';
 
-// Model for ingredient input from UI
 class IngredientInput {
-  final String name;
+  final String ingredientId;
   final String quantity;
   final String unit;
 
-  IngredientInput({required this.name, required this.quantity, required this.unit});
+  IngredientInput({
+    required this.ingredientId,
+    required this.quantity,
+    required this.unit,
+  });
 }
 
 class RecipeService {
   final PocketBase _pb = PocketBaseClient.instance;
-
-  Future<RecordModel> createCategory(String name) async {
-    try {
-      final body = <String, dynamic>{'name': name};
-      final record = await _pb.collection('meal_categories').create(body: body);
-      return record;
-    } catch (e) {
-      print('Error creating category: $e');
-      rethrow;
-    }
-  }
-
-  Future<RecordModel> addIngredient(String name) async {
-    try {
-      final body = <String, dynamic>{'name': name};
-      final record = await _pb.collection('ingredients').create(body: body);
-      return record;
-    } catch (e) {
-      print('Error creating ingredient: $e');
-      rethrow;
-    }
-  }
-
-  Future<List<Recipe>> getUserRecipes(String userId) async {
-    try {
-      final records = await _pb.collection('meals').getFullList(
-            filter: 'user_id = "$userId"',
-            expand: 'user_id,category_id',
-          );
-      return records.map((record) => Recipe.fromRecord(record)).toList();
-    } catch (e) {
-      print('Error fetching user recipes: $e');
-      return [];
-    }
-  }
 
   Future<List<Recipe>> getAllRecipes({int limit = 50}) async {
     try {
@@ -60,33 +28,102 @@ class RecipeService {
             page: 1,
             perPage: limit,
             sort: '-created',
-            expand: 'user_id,category_id',
+            expand: 'user_id,category_id,meal_ingredient(meal_id).ingredient_id',
           );
       return result.items.map((record) => Recipe.fromRecord(record)).toList();
     } catch (e) {
       print('Error fetching all recipes: $e');
-      return [];
+      rethrow;
     }
   }
 
   Future<List<RecordModel>> getMealCategories() async {
     try {
-      final records = await _pb.collection('meal_categories').getFullList(sort: 'name');
-      return records;
+      return await _pb.collection('meal_categories').getFullList(sort: 'name');
     } catch (e) {
       print('Error fetching meal categories: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<Recipe>> getUserRecipes(String userId) async {
+      try {
+        final records = await _pb.collection('meals').getFullList(
+              filter: 'user_id = "$userId"',
+              expand: 'user_id,category_id',
+            );
+        return records.map((record) => Recipe.fromRecord(record)).toList();
+      } catch (e) {
+        print('Error fetching user recipes: $e');
+        return [];
+      }
+    }
+
+  Future<RecordModel> addIngredient(String name, [String? description]) async {
+    try {
+      final body = <String, dynamic>{'name': name, 'description': description ?? ''};
+      return await _pb.collection('ingredients').create(body: body);
+    } catch (e) {
+      print('Error creating ingredient: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<RecordModel>> searchIngredients(String query) async {
+    if (query.trim().isEmpty) return [];
+    try {
+      final result = await _pb.collection('ingredients').getList(
+            perPage: 15, filter: 'name ~ "${query.trim()}"');
+      return result.items;
+    } catch (e) {
+      print('Error searching ingredients: $e');
       return [];
     }
   }
 
-  Future<List<RecordModel>> getIngredients() async {
-    try {
-      final records = await _pb.collection('ingredients').getFullList(sort: 'name');
-      return records;
-    } catch (e) {
-      print('Error fetching ingredients: $e');
-      return [];
+  /// FUNGSI PENCARIAN BARU YANG KOMPREHENSIF
+  Future<List<Recipe>> searchRecipes(String query) async {
+    if (query.trim().isEmpty) return [];
+
+    final Set<String> mealIds = {};
+
+    // 1. Cari berdasarkan nama resep atau deskripsi
+    final mealNameFilter = 'name ~ "$query" || description ~ "$query"';
+    final mealsByName = await _pb.collection('meals').getFullList(filter: mealNameFilter);
+    for (var meal in mealsByName) {
+      mealIds.add(meal.id);
     }
+
+    // 2. Cari berdasarkan nama bahan
+    final ingredients = await _pb.collection('ingredients').getFullList(filter: 'name ~ "$query"');
+    if (ingredients.isNotEmpty) {
+      final ingredientIdFilters = ingredients.map((i) => 'ingredient_id = "${i.id}"').join(' || ');
+      final mealIngredients = await _pb.collection('meal_ingredient').getFullList(filter: '($ingredientIdFilters)');
+      for (var mi in mealIngredients) {
+        mealIds.add(mi.data['meal_id']);
+      }
+    }
+
+    // 3. Cari berdasarkan nama kategori
+    final categories = await _pb.collection('meal_categories').getFullList(filter: 'name ~ "$query"');
+    if (categories.isNotEmpty) {
+      final categoryIdFilters = categories.map((c) => 'category_id ?~ "${c.id}"').join(' || ');
+      final mealsByCategory = await _pb.collection('meals').getFullList(filter: '($categoryIdFilters)');
+      for (var meal in mealsByCategory) {
+        mealIds.add(meal.id);
+      }
+    }
+
+    if (mealIds.isEmpty) return [];
+
+    // 4. Ambil semua resep unik berdasarkan ID yang terkumpul
+    final finalFilter = mealIds.map((id) => 'id = "$id"').join(' || ');
+    final finalResult = await _pb.collection('meals').getFullList(
+      filter: finalFilter,
+      expand: 'user_id,category_id,meal_ingredient(meal_id).ingredient_id',
+    );
+
+    return finalResult.map((record) => Recipe.fromRecord(record)).toList();
   }
 
   Future<void> createRecipe({
@@ -99,68 +136,42 @@ class RecipeService {
     required List<String> instructions,
     File? imageFile,
   }) async {
-    if (!_pb.authStore.isValid) {
-      throw Exception("User is not authenticated.");
-    }
+    if (!_pb.authStore.isValid) throw Exception("User not authenticated.");
+    
     final userId = _pb.authStore.model.id;
 
     final mealBody = <String, dynamic>{
       "name": name,
       "description": description,
       "times": int.tryParse(prepTime.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
-      "difficulty": difficulty,
+      "difiiculty": difficulty,
       "user_id": userId,
-      "category_id": categoryIds.isNotEmpty ? categoryIds.first : "",
+      "category_id": categoryIds,
     };
 
     List<http.MultipartFile> files = [];
     if (imageFile != null) {
-      final fileSize = await imageFile.length();
-      if (fileSize > 5 * 1024 * 1024) {
-        throw Exception("Image file size exceeds 5MB limit.");
-      }
-      files.add(http.MultipartFile.fromBytes(
-        'image',
-        await imageFile.readAsBytes(),
-        filename: basename(imageFile.path),
-      ));
+      files.add(await http.MultipartFile.fromPath('image', imageFile.path, filename: basename(imageFile.path)));
     }
 
     final newMealRecord = await _pb.collection('meals').create(body: mealBody, files: files);
     final newMealId = newMealRecord.id;
 
-    for (int i = 0; i < instructions.length; i++) {
-      if (instructions[i].isNotEmpty) {
-        final stepBody = {
-          "meal_id": newMealId,
-          "description": instructions[i],
-          "number": i + 1,
-        };
-        await _pb.collection('steps').create(body: stepBody);
-      }
-    }
+    try {
+      final stepFutures = instructions.where((t) => t.isNotEmpty).map((text) {
+        final stepBody = {"meal_id": newMealId, "description": text, "number": instructions.indexOf(text) + 1};
+        return _pb.collection('steps').create(body: stepBody);
+      });
 
-    for (final ingredientInput in ingredients) {
-      if (ingredientInput.name.isEmpty) continue;
+      final ingredientFutures = ingredients.map((input) {
+        final body = {"meal_id": newMealId, "ingredient_id": input.ingredientId, "quantity": double.tryParse(input.quantity) ?? 0, "unit": input.unit};
+        return _pb.collection('meal_ingredient').create(body: body);
+      });
 
-      String ingredientId;
-      try {
-        final existingIngredient = await _pb.collection('ingredients')
-            .getFirstListItem('name = "${ingredientInput.name.trim()}"');
-        ingredientId = existingIngredient.id;
-      } catch (_) {
-        final newIngredientRecord = await _pb.collection('ingredients')
-            .create(body: {'name': ingredientInput.name.trim()});
-        ingredientId = newIngredientRecord.id;
-      }
-
-      final mealIngredientBody = {
-        "meal_id": newMealId,
-        "ingredient_id": ingredientId,
-        "quantity": double.tryParse(ingredientInput.quantity) ?? 0,
-        "unit": ingredientInput.unit.trim(),
-      };
-      await _pb.collection('meal_ingredient').create(body: mealIngredientBody);
+      await Future.wait([...stepFutures, ...ingredientFutures]);
+    } catch (e) {
+      await _pb.collection('meals').delete(newMealId);
+      throw Exception('Failed to save related records. Check API Rules. Error: $e');
     }
   }
 }

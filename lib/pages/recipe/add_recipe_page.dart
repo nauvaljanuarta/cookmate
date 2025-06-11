@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'dart:io';
+
 import 'package:cookmate2/config/theme.dart';
+import 'package:cookmate2/pages/recipe/select_ingredient_page.dart';
 import 'package:cookmate2/services/recipe_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -7,26 +10,22 @@ import 'package:image_picker/image_picker.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class AddRecipePage extends StatefulWidget {
+  // PERBAIKAN: Menghapus callback `onRecipeAdded` dari constructor
   const AddRecipePage({super.key});
 
   @override
   State<AddRecipePage> createState() => _AddRecipePageState();
 }
 
-class IngredientController {
-  final TextEditingController name;
-  final TextEditingController quantity;
-  final TextEditingController unit;
-
-  IngredientController()
-      : name = TextEditingController(),
-        quantity = TextEditingController(),
-        unit = TextEditingController();
+/// Controller untuk setiap baris bahan di UI.
+class RecipeIngredientController {
+  RecordModel? selectedIngredient;
+  final TextEditingController quantityController = TextEditingController();
+  final TextEditingController unitController = TextEditingController();
 
   void dispose() {
-    name.dispose();
-    quantity.dispose();
-    unit.dispose();
+    quantityController.dispose();
+    unitController.dispose();
   }
 }
 
@@ -34,23 +33,16 @@ class _AddRecipePageState extends State<AddRecipePage> {
   final _recipeService = RecipeService();
   bool _isLoading = false;
 
-  // Controllers for main fields
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _prepTimeController = TextEditingController();
 
-  // State for dropdown/picker
   String _selectedDifficulty = 'Medium';
-  String? _selectedCategoryId;
   List<RecordModel> _categories = [];
+  final List<String> _selectedCategoryIds = [];
 
-  // Lists for dynamic text controllers
-  final List<IngredientController> _ingredientControllers = [
-    IngredientController()
-  ];
-  final List<TextEditingController> _instructionControllers = [
-    TextEditingController()
-  ];
+  List<RecipeIngredientController> _ingredientControllers = [RecipeIngredientController()];
+  List<TextEditingController> _instructionControllers = [TextEditingController()];
 
   File? _image;
   final _picker = ImagePicker();
@@ -61,120 +53,63 @@ class _AddRecipePageState extends State<AddRecipePage> {
     _fetchCategories();
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    _prepTimeController.dispose();
+    for (var controller in _ingredientControllers) { controller.dispose(); }
+    for (var controller in _instructionControllers) { controller.dispose(); }
+    super.dispose();
+  }
+
   Future<void> _fetchCategories() async {
     try {
       final categories = await _recipeService.getMealCategories();
-      if (mounted && categories.isNotEmpty) {
-        setState(() {
-          _categories = categories;
-          _selectedCategoryId = categories.first.id;
-        });
-      }
+      if (mounted) setState(() => _categories = categories);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load categories: $e')),
-        );
-      }
+      if (mounted) _showErrorSnackbar('Failed to load categories: $e');
     }
   }
 
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      final fileSize = await File(pickedFile.path).length();
-      if (fileSize > 5 * 1024 * 1024) { // 5MB limit
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Image size exceeds 5MB limit.')),
-        );
-        return;
-      }
+  Future<void> _navigateToSelectIngredient(int index) async {
+    final selectedIngredient = await Navigator.push<RecordModel>(
+      context,
+      CupertinoPageRoute(builder: (context) => const SelectIngredientPage()),
+    );
+    if (selectedIngredient != null && mounted) {
       setState(() {
-        _image = File(pickedFile.path);
+        _ingredientControllers[index].selectedIngredient = selectedIngredient;
       });
     }
   }
-
-  void _addInstructionField() {
-    setState(() {
-      _instructionControllers.add(TextEditingController());
-    });
-  }
-
-  void _removeInstructionField(int index) {
-    setState(() {
-      _instructionControllers[index].dispose();
-      _instructionControllers.removeAt(index);
-    });
-  }
-
-  void _addIngredientRow() {
-    setState(() {
-      _ingredientControllers.add(IngredientController());
-    });
-  }
-
-  void _removeIngredientRow(int index) {
-    setState(() {
-      _ingredientControllers[index].dispose();
-      _ingredientControllers.removeAt(index);
-    });
-  }
-
-  void _showValidationError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
-    );
-  }
-
+  
   Future<void> _submitRecipe() async {
-    // Manual validation
-    if (_nameController.text.isEmpty) {
-      _showValidationError('Recipe Name cannot be empty.');
-      return;
+    if (_nameController.text.isEmpty || _descriptionController.text.isEmpty || _prepTimeController.text.isEmpty) {
+      _showValidationError('Please fill all recipe details.'); return;
     }
-    if (_descriptionController.text.isEmpty) {
-      _showValidationError('Description cannot be empty.');
-      return;
+    if (_selectedCategoryIds.isEmpty) {
+      _showValidationError('Please select at least one category.'); return;
     }
-    if (_prepTimeController.text.isEmpty ||
-        int.tryParse(_prepTimeController.text.replaceAll(RegExp(r'[^0-9]'), '')) == null) {
-      _showValidationError('Prep Time must contain a valid number.');
-      return;
-    }
-    if (_selectedCategoryId == null) {
-      _showValidationError('Please select a category.');
-      return;
-    }
+
     final ingredients = _ingredientControllers
+        .where((c) => c.selectedIngredient != null && c.quantityController.text.isNotEmpty)
         .map((c) => IngredientInput(
-              name: c.name.text,
-              quantity: c.quantity.text,
-              unit: c.unit.text,
-            ))
-        .where((i) => i.name.isNotEmpty)
-        .toList();
+              ingredientId: c.selectedIngredient!.id,
+              quantity: c.quantityController.text,
+              unit: c.unitController.text,
+            )).toList();
+
     if (ingredients.isEmpty) {
-      _showValidationError('At least one ingredient is required.');
-      return;
+      _showValidationError('At least one valid ingredient with quantity is required.'); return;
     }
-    final instructions = _instructionControllers
-        .map((c) => c.text)
-        .where((text) => text.isNotEmpty)
-        .toList();
+
+    final instructions = _instructionControllers.map((c) => c.text).where((t) => t.isNotEmpty).toList();
     if (instructions.isEmpty) {
-      _showValidationError('At least one instruction is required.');
-      return;
+      _showValidationError('At least one instruction is required.'); return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
-
-    await Future.delayed(const Duration(milliseconds: 100));
+    setState(() => _isLoading = true);
 
     try {
       await _recipeService.createRecipe(
@@ -182,356 +117,326 @@ class _AddRecipePageState extends State<AddRecipePage> {
         description: _descriptionController.text,
         prepTime: _prepTimeController.text,
         difficulty: _selectedDifficulty,
-        categoryIds: [_selectedCategoryId!],
+        categoryIds: _selectedCategoryIds,
         ingredients: ingredients,
         instructions: instructions,
         imageFile: _image,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Recipe added successfully!')),
-        );
-        Navigator.pop(context);
+        await _showSuccessAndReset();
       }
     } catch (e) {
-      print('Error saving recipe: $e');
-      if (mounted) {
-        _showValidationError(
-            'Failed to add recipe: ${e is ClientException ? e.response['message'] : e.toString()}');
+      if(mounted) {
+        _showErrorSnackbar('Failed to add recipe: $e');
+        setState(() => _isLoading = false);
       }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+    }
+  }
+  
+  Future<void> _showSuccessAndReset() async {
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return const CupertinoAlertDialog(
+          title: Text('Success!'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: 20),
+              Icon(CupertinoIcons.checkmark_circle_fill, color: CupertinoColors.systemGreen, size: 60),
+              SizedBox(height: 15),
+              Text('Recipe has been saved.'),
+            ],
+          ),
+        );
+      },
+    );
+
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    if (mounted) {
+      Navigator.of(context, rootNavigator: true).pop(); // Tutup dialog
+      _resetForm(); // Panggil fungsi untuk membersihkan form
     }
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _descriptionController.dispose();
-    _prepTimeController.dispose();
-    for (var controller in _ingredientControllers) {
-      controller.dispose();
-    }
-    for (var controller in _instructionControllers) {
-      controller.dispose();
-    }
-    super.dispose();
+  void _resetForm() {
+    setState(() {
+      _nameController.clear();
+      _descriptionController.clear();
+      _prepTimeController.clear();
+      _image = null;
+      _selectedDifficulty = 'Medium';
+      _selectedCategoryIds.clear();
+
+      for (var controller in _ingredientControllers) {
+        controller.dispose();
+      }
+      _ingredientControllers = [RecipeIngredientController()];
+      
+      for (var controller in _instructionControllers) {
+        controller.dispose();
+      }
+      _instructionControllers = [TextEditingController()];
+
+      _isLoading = false; 
+    });
   }
+
+  void _addIngredientRow() => setState(() => _ingredientControllers.add(RecipeIngredientController()));
+  
+  void _removeIngredientRow(int index) {
+    if (_ingredientControllers.length > 1) {
+      setState(() {
+        _ingredientControllers[index].dispose();
+        _ingredientControllers.removeAt(index);
+      });
+    }
+  }
+  
+  void _addInstructionField() => setState(() => _instructionControllers.add(TextEditingController()));
+
+  void _removeInstructionField(int index) {
+    if (_instructionControllers.length > 1) {
+      setState(() {
+        _instructionControllers[index].dispose();
+        _instructionControllers.removeAt(index);
+      });
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() => _image = File(pickedFile.path));
+    }
+  }
+  
+  void _showValidationError(String msg) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.orange));
+  void _showErrorSnackbar(String msg) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
 
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(
-        middle: const Text('Add New Recipe'),
-        trailing: _isLoading
-            ? const CupertinoActivityIndicator()
-            : CupertinoButton(
-                padding: EdgeInsets.zero,
-                onPressed: _submitRecipe,
-                child: const Text('Save'),
-              ),
+      navigationBar: const CupertinoNavigationBar(
+        middle: Text('Add New Recipe'),
       ),
       child: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
+        child: Column(
           children: [
-            _buildImagePicker(),
-            const SizedBox(height: 20),
-            _buildSectionTitle('Recipe Details'),
-            CupertinoTextField(
-              controller: _nameController,
-              placeholder: 'Recipe Name',
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: CupertinoColors.systemGrey6,
-                borderRadius: BorderRadius.circular(12),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                children: [
+                  _buildImagePicker(), const SizedBox(height: 20),
+                  _buildSectionTitle('Recipe Details'),
+                  _buildTextField(_nameController, 'Recipe Name'),
+                  _buildTextField(_descriptionController, 'Description', maxLines: 3),
+                  _buildTextField(_prepTimeController, 'Prep Time (e.g., 30 min)', keyboardType: TextInputType.number),
+                  _buildPickerField('Difficulty', _selectedDifficulty, ['EZ', 'Medium', 'Hard'], (v) => setState(() => _selectedDifficulty = v)),
+                  _categories.isEmpty ? const Center(child: CupertinoActivityIndicator()) : _buildMultiSelectPickerField(
+                    'Categories', _getSelectedCategoryNames().isNotEmpty ? _getSelectedCategoryNames() : 'Select one or more', _showCategorySelectionDialog),
+                  const SizedBox(height: 24),
+                  _buildSectionTitle('Ingredients'),
+                  _buildIngredientSection(),
+                  const SizedBox(height: 24),
+                  _buildSectionTitle('Instructions'), ..._buildInstructionFields(),
+                  const SizedBox(height: 20),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
-            CupertinoTextField(
-              controller: _descriptionController,
-              placeholder: 'Description',
-              maxLines: 3,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: CupertinoColors.systemGrey6,
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            const SizedBox(height: 12),
-            CupertinoTextField(
-              controller: _prepTimeController,
-              placeholder: 'Prep Time (e.g., 30 min)',
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: CupertinoColors.systemGrey6,
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _buildPickerField(
-              'Difficulty',
-              _selectedDifficulty,
-              ['EZ', 'Medium', 'Hard'],
-              (newValue) {
-                setState(() {
-                  _selectedDifficulty = newValue;
-                });
-              },
-            ),
-            const SizedBox(height: 12),
-            _categories.isEmpty
-                ? const Center(child: CupertinoActivityIndicator())
-                : _buildPickerField(
-                    'Category',
-                    _categories
-                        .firstWhere(
-                          (c) => c.id == _selectedCategoryId,
-                          orElse: () => _categories.first,
-                        )
-                        .data['name'],
-                    _categories.map((c) => c.data['name'].toString()).toList(),
-                    (newValue) {
-                      setState(() {
-                        _selectedCategoryId = _categories
-                            .firstWhere((c) => c.data['name'] == newValue)
-                            .id;
-                      });
-                    },
-                  ),
-            const SizedBox(height: 24),
-            _buildSectionTitle('Ingredients'),
-            ..._buildIngredientFields(),
-            const SizedBox(height: 24),
-            _buildSectionTitle('Instructions'),
-            ..._buildDynamicTextFields(
-              _instructionControllers,
-              'Step',
-              _addInstructionField,
-              _removeInstructionField,
-            ),
+            _buildSaveButton(),
           ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildIngredientSection() {
+    return Column(
+      children: [
+        for (int i = 0; i < _ingredientControllers.length; i++)
+          _buildSingleIngredientField(i),
+        Align(
+          alignment: Alignment.centerRight,
+          child: CupertinoButton(child: const Text('+ Add Ingredient'), onPressed: _addIngredientRow),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildSingleIngredientField(int index) {
+    final controller = _ingredientControllers[index];
+    final ingredientName = controller.selectedIngredient?.data['name'] ?? 'Select Ingredient';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: 4,
+            child: CupertinoButton(
+              color: controller.selectedIngredient != null ? CupertinoColors.systemGrey5 : CupertinoColors.systemGrey6,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              onPressed: () => _navigateToSelectIngredient(index),
+              child: Text(
+                ingredientName,
+                style: TextStyle(
+                  color: controller.selectedIngredient != null ? CupertinoColors.label.resolveFrom(context) : CupertinoColors.placeholderText.resolveFrom(context),
+                  overflow: TextOverflow.ellipsis
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(flex: 2, child: CupertinoTextField(controller: controller.quantityController, placeholder: 'Qty', keyboardType: TextInputType.number)),
+          const SizedBox(width: 8),
+          Expanded(flex: 3, child: CupertinoTextField(controller: controller.unitController, placeholder: 'Unit')),
+          if (_ingredientControllers.length > 1)
+            CupertinoButton(
+              padding: const EdgeInsets.only(left: 4),
+              child: const Icon(CupertinoIcons.minus_circle, color: CupertinoColors.destructiveRed, size: 24),
+              onPressed: () => _removeIngredientRow(index),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSaveButton() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: SizedBox(
+        width: double.infinity,
+        child: CupertinoButton(
+          color: AppTheme.primaryColor,
+          onPressed: _isLoading ? null : _submitRecipe,
+          child: _isLoading
+            ? const CupertinoActivityIndicator(color: Colors.white)
+            : const Text(
+                'Save Recipe',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              ),
         ),
       ),
     );
   }
 
   Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0, top: 16.0),
-      child: Text(
-        title,
-        style: AppTheme.subheadingStyle.copyWith(fontWeight: FontWeight.bold),
+    return Padding(padding: const EdgeInsets.only(bottom: 12.0, top: 16.0),
+      child: Text(title, style: AppTheme.subheadingStyle.copyWith(fontWeight: FontWeight.bold)));
+  }
+  
+  Widget _buildImagePicker() {
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Container(
+        height: 200, width: double.infinity,
+        decoration: BoxDecoration(color: CupertinoColors.systemGrey5, borderRadius: BorderRadius.circular(12),
+          image: _image != null ? DecorationImage(image: FileImage(_image!), fit: BoxFit.cover) : null),
+        child: _image == null ? const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Icon(CupertinoIcons.photo_camera, size: 50, color: CupertinoColors.systemGrey),
+              SizedBox(height: 8), Text('Tap to select an image'),
+            ])) : null,
       ),
     );
   }
 
-  Widget _buildPickerField(
-      String title, String currentValue, List<String> options, ValueChanged<String> onChanged) {
+  Widget _buildTextField(TextEditingController controller, String placeholder, {int maxLines = 1, TextInputType keyboardType = TextInputType.text}) {
+    return Padding(padding: const EdgeInsets.only(bottom: 12.0),
+      child: CupertinoTextField(controller: controller, placeholder: placeholder, maxLines: maxLines, keyboardType: keyboardType,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(color: CupertinoColors.systemGrey6, borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  List<Widget> _buildInstructionFields() {
+    List<Widget> fields = [];
+    for (int i = 0; i < _instructionControllers.length; i++) {
+      fields.add(Padding(padding: const EdgeInsets.only(top: 8.0), child: Row(children: [
+        Expanded(child: CupertinoTextField(controller: _instructionControllers[i], placeholder: 'Step ${i + 1}', maxLines: null)),
+        if (_instructionControllers.length > 1) CupertinoButton(padding: const EdgeInsets.only(left: 8),
+            child: const Icon(CupertinoIcons.minus_circle, color: CupertinoColors.destructiveRed, size: 24),
+            onPressed: () => _removeInstructionField(i)),
+      ])));
+    }
+    fields.add(Align(alignment: Alignment.centerRight,
+      child: CupertinoButton(child: const Text('+ Add Step'), onPressed: _addInstructionField),
+    ));
+    return fields;
+  }
+  
+  String _getSelectedCategoryNames() {
+    if (_selectedCategoryIds.isEmpty) return '';
+    return _categories.where((c) => _selectedCategoryIds.contains(c.id)).map((c) => c.data['name'].toString()).join(', ');
+  }
+
+  Widget _buildPickerField(String title, String currentValue, List<String> options, ValueChanged<String> onChanged) {
     return GestureDetector(
-      onTap: () {
-        _showPicker(context, options, (index) {
-          onChanged(options[index]);
-        });
-      },
+      onTap: () => _showPicker(context, options, (index) => onChanged(options[index])),
       child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: CupertinoColors.systemGrey6,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(title, style: CupertinoTheme.of(context).textTheme.textStyle),
-            Row(
-              children: [
-                Text(
-                  currentValue,
-                  style: CupertinoTheme.of(context)
-                      .textTheme
-                      .textStyle
-                      .copyWith(color: CupertinoColors.systemGrey),
-                ),
-                const SizedBox(width: 8),
-                const Icon(
-                  CupertinoIcons.chevron_down,
-                  size: 16,
-                  color: CupertinoColors.systemGrey,
-                ),
-              ],
-            ),
-          ],
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), margin: const EdgeInsets.only(bottom: 12.0),
+        decoration: BoxDecoration(color: CupertinoColors.systemGrey6, borderRadius: BorderRadius.circular(12)),
+        child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Text(title, style: CupertinoTheme.of(context).textTheme.textStyle),
+          Row(children: [
+            Text(currentValue, style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(color: CupertinoColors.systemGrey)),
+            const SizedBox(width: 8), const Icon(CupertinoIcons.chevron_down, size: 16, color: CupertinoColors.systemGrey),
+          ]),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildMultiSelectPickerField(String title, String currentValue, VoidCallback onTap) {
+     return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), margin: const EdgeInsets.only(bottom: 12.0),
+        decoration: BoxDecoration(color: CupertinoColors.systemGrey6, borderRadius: BorderRadius.circular(12)),
+        child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Text(title, style: CupertinoTheme.of(context).textTheme.textStyle), const SizedBox(width: 16),
+          Expanded(child: Text(currentValue, textAlign: TextAlign.end, style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(color: CupertinoColors.systemGrey), overflow: TextOverflow.ellipsis)),
+          const SizedBox(width: 8), const Icon(CupertinoIcons.chevron_up_chevron_down, size: 16, color: CupertinoColors.systemGrey),
+        ]),
       ),
     );
   }
 
   void _showPicker(BuildContext context, List<String> items, ValueChanged<int> onSelectedItemChanged) {
-    final initialIndex = items.indexOf(
-      _categories
-          .firstWhere(
-            (c) => c.id == _selectedCategoryId,
-            orElse: () => _categories.first,
-          )
-          .data['name'],
-    );
-    showCupertinoModalPopup(
-      context: context,
-      builder: (_) => Container(
-        height: 250,
-        color: CupertinoColors.systemBackground.resolveFrom(context),
-        child: CupertinoPicker(
-          scrollController:
-              FixedExtentScrollController(initialItem: initialIndex >= 0 ? initialIndex : 0),
-          itemExtent: 32.0,
-          onSelectedItemChanged: onSelectedItemChanged,
-          children: items.map((item) => Center(child: Text(item))).toList(),
-        ),
-      ),
-    );
+    showCupertinoModalPopup(context: context, builder: (_) => Container(height: 250, color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: CupertinoPicker(itemExtent: 32.0, onSelectedItemChanged: onSelectedItemChanged, children: items.map((item) => Center(child: Text(item))).toList())));
   }
 
-  List<Widget> _buildIngredientFields() {
-    List<Widget> fields = [];
-    for (int i = 0; i < _ingredientControllers.length; i++) {
-      fields.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                flex: 4,
-                child: CupertinoTextField(
-                  controller: _ingredientControllers[i].name,
-                  placeholder: 'Ingredient Name',
-                  padding: const EdgeInsets.all(10),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 2,
-                child: CupertinoTextField(
-                  controller: _ingredientControllers[i].quantity,
-                  placeholder: 'Qty',
-                  keyboardType: TextInputType.number,
-                  padding: const EdgeInsets.all(10),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 3,
-                child: CupertinoTextField(
-                  controller: _ingredientControllers[i].unit,
-                  placeholder: 'Unit',
-                  padding: const EdgeInsets.all(10),
-                ),
-              ),
-              if (_ingredientControllers.length > 1)
-                CupertinoButton(
-                  padding: const EdgeInsets.only(left: 4),
-                  child: const Icon(
-                    CupertinoIcons.minus_circle,
-                    color: CupertinoColors.destructiveRed,
-                    size: 24,
-                  ),
-                  onPressed: () => _removeIngredientRow(i),
-                ),
-            ],
-          ),
-        ),
-      );
-    }
-    fields.add(
-      Align(
-        alignment: Alignment.centerRight,
-        child: CupertinoButton(
-          child: const Text('+ Add Ingredient'),
-          onPressed: _addIngredientRow,
-        ),
-      ),
+  void _showCategorySelectionDialog() {
+    showCupertinoModalPopup(context: context, builder: (BuildContext context) {
+        return StatefulBuilder(builder: (BuildContext context, StateSetter modalSetState) {
+            return CupertinoActionSheet(
+              title: const Text('Select Categories'), message: const Text('You can select more than one category.'),
+              actions: _categories.map((category) {
+                final bool isSelected = _selectedCategoryIds.contains(category.id);
+                return CupertinoActionSheetAction(
+                  onPressed: () {
+                    modalSetState(() {
+                      if (isSelected) { _selectedCategoryIds.remove(category.id); } else { _selectedCategoryIds.add(category.id); }
+                    });
+                    setState(() {});
+                  },
+                  child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Text(category.data['name']),
+                    if (isSelected) const Icon(CupertinoIcons.checkmark_alt, color: AppTheme.primaryColor),
+                  ]),
+                );
+              }).toList(),
+              cancelButton: CupertinoActionSheetAction(
+                isDefaultAction: true, onPressed: () => Navigator.pop(context), child: const Text('Done')),
+            );
+          },
+        );
+      },
     );
-    return fields;
-  }
-
-  Widget _buildImagePicker() {
-    return GestureDetector(
-      onTap: _pickImage,
-      child: Container(
-        height: 200,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: CupertinoColors.systemGrey5,
-          borderRadius: BorderRadius.circular(12),
-          image: _image != null
-              ? DecorationImage(image: FileImage(_image!), fit: BoxFit.cover)
-              : null,
-        ),
-        child: _image == null
-            ? const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      CupertinoIcons.photo_camera,
-                      size: 50,
-                      color: CupertinoColors.systemGrey,
-                    ),
-                    SizedBox(height: 8),
-                    Text('Tap to select an image'),
-                  ],
-                ),
-              )
-            : null,
-      ),
-    );
-  }
-
-  List<Widget> _buildDynamicTextFields(
-      List<TextEditingController> controllers, String placeholder, VoidCallback onAdd, Function(int) onRemove) {
-    List<Widget> fields = [];
-    for (int i = 0; i < controllers.length; i++) {
-      fields.add(
-        Padding(
-          padding: const EdgeInsets.only(top: 8.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: CupertinoTextField(
-                  controller: controllers[i],
-                  placeholder: '$placeholder ${i + 1}',
-                  padding: const EdgeInsets.all(12),
-                ),
-              ),
-              if (controllers.length > 1)
-                CupertinoButton(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: const Icon(
-                    CupertinoIcons.minus_circle,
-                    color: CupertinoColors.destructiveRed,
-                    size: 24,
-                  ),
-                  onPressed: () => onRemove(i),
-                ),
-            ],
-          ),
-        ),
-      );
-    }
-    fields.add(
-      Align(
-        alignment: Alignment.centerRight,
-        child: CupertinoButton(
-          child: const Text('+ Add Step'),
-          onPressed: onAdd,
-        ),
-      ),
-    );
-    return fields;
   }
 }

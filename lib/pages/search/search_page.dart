@@ -1,9 +1,14 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:async';
 import 'package:cookmate2/config/theme.dart';
-import 'package:cookmate2/data/dummy_data.dart';
 import 'package:cookmate2/models/recipe.dart';
-import 'package:cookmate2/widgets/recipe_card.dart';
 import 'package:cookmate2/pages/recipe/detail_recipe_page.dart';
+import 'package:cookmate2/services/recipe_service.dart';
+import 'package:cookmate2/widgets/category_card.dart';
+import 'package:cookmate2/widgets/recipe_card.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:pocketbase/pocketbase.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -13,303 +18,293 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  final TextEditingController _searchController = TextEditingController();
-  List<Recipe> _searchResults = [];
-  List<String> _recentSearches = [
-    'Pasta',
-    'Chicken',
-    'Vegetarian',
-    'Quick Meals',
-  ];
-  bool _isSearching = false;
+  final _searchController = TextEditingController();
+  final _recipeService = RecipeService();
+  Timer? _debounce;
+
+  // State Management
+  String _currentQuery = '';
+  List<String> _recentSearches = [];
+  Future<List<Recipe>>? _searchResultsFuture;
   
+  // PERBAIKAN: Hapus 'late' dan buat nullable untuk menghindari error
+  Future<List<RecordModel>>? _categoriesFuture;
+  Future<List<Recipe>>? _exploreRecipesFuture;
+
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(_onSearchChanged);
+    _loadInitialData();
   }
-  
+
+  void _loadInitialData() {
+    _loadRecentSearches();
+    // Inisialisasi future di sini
+    _categoriesFuture = _recipeService.getMealCategories();
+    _exploreRecipesFuture = _recipeService.getAllRecipes(limit: 10);
+  }
+
   @override
   void dispose() {
-    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
-  
-  void _onSearchChanged() {
-    final query = _searchController.text.trim().toLowerCase();
-    setState(() {
-      _isSearching = query.isNotEmpty;
-      if (_isSearching) {
-        _searchResults = DummyData.recipes.where((recipe) {
-          return recipe.title.toLowerCase().contains(query) ||
-              recipe.description.toLowerCase().contains(query) ||
-              recipe.categories.any((category) => category.toLowerCase().contains(query)) ||
-              recipe.ingredients.any((ingredient) => ingredient.toLowerCase().contains(query));
-        }).toList();
+
+  // --- Logika Pencarian ---
+
+  void _onSearchChanged(String query) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      final trimmedQuery = query.trim();
+      if (trimmedQuery.length > 1) {
+        _performSearch(trimmedQuery);
+      } else if (trimmedQuery.isEmpty) {
+        _clearSearch();
       }
-    });
-  }
-  
-  void _addToRecentSearches(String query) {
-    if (query.isEmpty) return;
-    
-    setState(() {
-      _recentSearches.remove(query);
-      _recentSearches.insert(0, query);
-      if (_recentSearches.length > 5) {
-        _recentSearches = _recentSearches.sublist(0, 5);
-      }
-    });
-  }
-  
-  void _clearSearch() {
-    setState(() {
-      _searchController.clear();
-      _isSearching = false;
     });
   }
   
   void _performSearch(String query) {
+    if (query.isEmpty) return;
     _searchController.text = query;
     _addToRecentSearches(query);
-    _onSearchChanged();
+    setState(() {
+      _currentQuery = query;
+      _searchResultsFuture = _recipeService.searchRecipes(query);
+    });
+    // Menutup keyboard setelah pencarian
+    FocusScope.of(context).unfocus();
   }
+
+  void _clearSearch() {
+    _searchController.clear();
+    setState(() {
+      _currentQuery = '';
+      _searchResultsFuture = null;
+    });
+  }
+
+  // --- Logika Pencarian Terkini ---
+
+  Future<void> _loadRecentSearches() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _recentSearches = prefs.getStringList('recent_searches') ?? [];
+      });
+    }
+  }
+
+  Future<void> _addToRecentSearches(String term) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _recentSearches.removeWhere((item) => item.toLowerCase() == term.toLowerCase());
+        _recentSearches.insert(0, term);
+        if (_recentSearches.length > 5) {
+          _recentSearches = _recentSearches.sublist(0, 5);
+        }
+      });
+    }
+    await prefs.setStringList('recent_searches', _recentSearches);
+  }
+
+  void _removeRecentSearch(String term) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _recentSearches.remove(term);
+      });
+    }
+    await prefs.setStringList('recent_searches', _recentSearches);
+  }
+
 
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      child: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: CupertinoSearchTextField(
-                controller: _searchController,
-                placeholder: 'Search recipes, ingredients...',
-                onSubmitted: _performSearch,
-                onSuffixTap: _clearSearch,
-              ),
-            ),
-            Expanded(
-              child: _isSearching ? _buildSearchResults() : _buildSearchSuggestions(),
-            ),
-          ],
-        ),
+      navigationBar: const CupertinoNavigationBar(
+        middle: Text('Explore'),
       ),
-    );
-  }
-  
-  Widget _buildSearchSuggestions() {
-    
-    final categories = <String>{};
-    for (final recipe in DummyData.recipes) {
-      categories.addAll(recipe.categories);
-    }
-    
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (_recentSearches.isNotEmpty) ...[
-            Text(
-              'Recent Searches',
-              style: AppTheme.subheadingStyle,
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _recentSearches.map((search) {
-                return GestureDetector(
-                  onTap: () => _performSearch(search),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: CupertinoColors.systemGrey6,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: CupertinoColors.systemGrey5,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          CupertinoIcons.clock,
-                          size: 14,
-                          color: CupertinoColors.systemGrey,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          search,
-                          style: const TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 24),
-          ],
-          
-          Text(
-            'Popular Categories',
-            style: AppTheme.subheadingStyle,
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 120,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: categories.take(5).map((category) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: GestureDetector(
-                    onTap: () => _performSearch(category),
-                    child: Container(
-                      width: 100,
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppTheme.primaryColor.withOpacity(0.5),
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            CupertinoIcons.tag,
-                            color: AppTheme.primaryColor,
-                            size: 40,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            category,
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              color: AppTheme.primaryColor.withOpacity(0.8),
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: CupertinoSearchTextField(
+              controller: _searchController,
+              placeholder: 'Search recipes, ingredients, categories...',
+              onChanged: _onSearchChanged,
+              onSubmitted: _performSearch,
             ),
           ),
-          
-          const SizedBox(height: 24),
-          
-          Text(
-            'Explore Recipes',
-            style: AppTheme.subheadingStyle,
+          Expanded(
+            child: _currentQuery.isNotEmpty ? _buildSearchResults() : _buildSearchSuggestions(),
           ),
-          const SizedBox(height: 12),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.75,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-            ),
-            itemCount: DummyData.recipes.length,
-            itemBuilder: (context, index) {
-              final recipe = DummyData.recipes[index];
-              return RecipeCard(
-                recipe: recipe,
-                onTap: () {
-                  Navigator.of(context).push(
-                    CupertinoPageRoute(
-                      builder: (context) => RecipeDetail(recipe: recipe),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-          const SizedBox(height: 24),
         ],
       ),
     );
   }
-  
+
   Widget _buildSearchResults() {
-    if (_searchResults.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              CupertinoIcons.search,
-              size: 48,
-              color: CupertinoColors.systemGrey,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No results found for "${_searchController.text}"',
-              style: AppTheme.bodyStyle.copyWith(
-                color: CupertinoColors.systemGrey,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Try a different search term',
-              style: AppTheme.captionStyle,
-            ),
-          ],
-        ),
-      );
-    }
-    
-    return ListView(
-      padding: const EdgeInsets.all(16.0),
-      children: [
-        Text(
-          'Results for "${_searchController.text}"',
-          style: AppTheme.subheadingStyle,
-        ),
-        const SizedBox(height: 16),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+    return FutureBuilder<List<Recipe>>(
+      future: _searchResultsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CupertinoActivityIndicator(radius: 18));
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Center(
+            child: Text('No results found for "$_currentQuery"'),
+          );
+        }
+
+        final recipes = snapshot.data!;
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 0.75,
+            childAspectRatio: 0.57,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
           ),
-          itemCount: _searchResults.length,
+          itemCount: recipes.length,
           itemBuilder: (context, index) {
-            final recipe = _searchResults[index];
+            final recipe = recipes[index];
             return RecipeCard(
               recipe: recipe,
               onTap: () {
-                Navigator.of(context).push(
-                  CupertinoPageRoute(
+                 Navigator.of(context).push(CupertinoPageRoute(
                     builder: (context) => RecipeDetail(recipe: recipe),
-                  ),
-                );
+                 ));
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildSearchSuggestions() {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      children: [
+        if (_recentSearches.isNotEmpty) ...[
+          _buildSectionTitle('Recent Searches', showClear: true, onClear: () {
+            setState(() => _recentSearches.clear());
+            SharedPreferences.getInstance().then((p) => p.remove('recent_searches'));
+          }),
+          Wrap(
+            spacing: 8, runSpacing: 8,
+            children: _recentSearches.map((term) => _buildChip(
+              term,
+              icon: CupertinoIcons.clock,
+              onTap: () => _performSearch(term),
+              onLongPress: () => _removeRecentSearch(term),
+            )).toList(),
+          ),
+          const SizedBox(height: 24),
+        ],
+        
+        _buildSectionTitle('Popular Categories'),
+        FutureBuilder<List<RecordModel>>(
+          future: _categoriesFuture,
+          builder: (context, snapshot) {
+             if (snapshot.connectionState == ConnectionState.waiting) {
+               return const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: CupertinoActivityIndicator());
+             }
+             if (!snapshot.hasData || snapshot.data!.isEmpty) return const Text('No categories found.');
+             
+             final categories = snapshot.data!;
+             return SizedBox(
+              height: 40,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  final category = categories[index];
+                  return CategoryCard(
+                    title: category.data['name'],
+                    onTap: () => _performSearch(category.data['name']),
+                  );
+                },
+              ),
+            );
+          },
+        ),
+        
+        const SizedBox(height: 24),
+        _buildSectionTitle('Explore Recipes'),
+        FutureBuilder<List<Recipe>>(
+          future: _exploreRecipesFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+               return const Padding(padding: EdgeInsets.symmetric(vertical: 40), child: CupertinoActivityIndicator());
+            }
+            if (!snapshot.hasData || snapshot.data!.isEmpty) return const Text('No recipes to explore.');
+            
+            final recipes = snapshot.data!;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, childAspectRatio: 0.7, crossAxisSpacing: 16, mainAxisSpacing: 16),
+              itemCount: recipes.length,
+              itemBuilder: (context, index) {
+                final recipe = recipes[index];
+                return RecipeCard(recipe: recipe, onTap: () {
+                  Navigator.of(context).push(CupertinoPageRoute(
+                    builder: (context) => RecipeDetail(recipe: recipe),
+                  ));
+                });
               },
             );
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildSectionTitle(String title, {bool showClear = false, VoidCallback? onClear}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: AppTheme.subheadingStyle),
+          if (showClear)
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Text('Clear', style: TextStyle(color: CupertinoColors.systemGrey)),
+              onPressed: onClear,
+            ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildChip(String label, {required IconData icon, VoidCallback? onTap, VoidCallback? onLongPress}) {
+    return GestureDetector(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: CupertinoColors.systemGrey6,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: CupertinoColors.secondaryLabel),
+            const SizedBox(width: 6),
+            Text(label),
+          ],
+        ),
+      ),
     );
   }
 }
