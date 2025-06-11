@@ -1,6 +1,6 @@
 import 'package:cookmate2/config/pocketbase_client.dart';
 import 'package:cookmate2/models/recipe.dart';
-import 'package:cookmate2/pages/recipe/recipe_detail.dart';
+import 'package:cookmate2/pages/recipe/detail_recipe_page.dart';
 import 'package:cookmate2/services/recipe_service.dart';
 import 'package:cookmate2/widgets/recipe_card.dart';
 import 'package:flutter/cupertino.dart';

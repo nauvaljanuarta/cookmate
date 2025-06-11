@@ -3,7 +3,7 @@ import 'package:cookmate2/config/theme.dart';
 import 'package:cookmate2/data/dummy_data.dart';
 import 'package:cookmate2/models/recipe.dart';
 import 'package:cookmate2/widgets/recipe_card.dart';
-import 'package:cookmate2/pages/recipe/recipe_detail.dart';
+import 'package:cookmate2/pages/recipe/detail_recipe_page.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});

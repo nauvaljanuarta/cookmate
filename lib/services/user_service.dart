@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:pocketbase/pocketbase.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cookmate2/config/pocketbase_client.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cookmate2/models/user.dart';
 
 class UserService {

@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Colors;
 import 'package:cookmate2/config/theme.dart';
 import 'package:cookmate2/models/recipe.dart';
-import 'package:cookmate2/pages/recipe/recipe_detail.dart';
+import 'package:cookmate2/pages/recipe/detail_recipe_page.dart';
 
 class StackedRecipeCards extends StatefulWidget {
   final List<Recipe> recipes;

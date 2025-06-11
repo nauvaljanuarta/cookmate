@@ -3,7 +3,8 @@ import 'package:cookmate2/config/theme.dart';
 import 'package:cookmate2/models/recipe.dart';
 import 'package:cookmate2/models/user.dart' as model_user;
 import 'package:cookmate2/pages/profile/profile_page.dart';
-import 'package:cookmate2/pages/recipe/recipe_detail.dart';
+import 'package:cookmate2/pages/recipe/add_recipe_page.dart';
+import 'package:cookmate2/pages/recipe/detail_recipe_page.dart';
 import 'package:cookmate2/pages/search/search_page.dart';
 import 'package:cookmate2/services/recipe_service.dart';
 import 'package:cookmate2/services/user_service.dart';
@@ -92,7 +93,7 @@ class _HomePageState extends State<HomePage> {
               case 1:
                 return const SearchPage();
               case 2:
-                return const Center(child: Text('Add Meal Tab'));
+                return const AddRecipePage();
               case 3:
                 return const Center(child: Text('Meals Plan'));
               case 4:
@@ -232,7 +233,7 @@ class _HomePageState extends State<HomePage> {
             Row(
               children: [
                 GestureDetector(
-                  onTap: () => ProfilePage(),
+                  onTap: () => Navigator.push(context, CupertinoPageRoute(builder: (context) => const ProfilePage())),
                   child: CircleAvatar(
                     radius: 18,
                     backgroundImage: profileImageUrl != null ? NetworkImage(profileImageUrl!) : null,
