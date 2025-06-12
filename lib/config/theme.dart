@@ -82,5 +82,10 @@ class AppTheme {
       ),
     ),
   );
+
+  static const double cardHeight = 240;
+  static const double cardWidthRatio = 0.6; 
+  static const double cardBorderRadius = 20.0;
+  static const double spaceForShadow = 30.0;
 }
 

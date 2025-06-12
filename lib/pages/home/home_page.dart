@@ -42,8 +42,9 @@ class _HomePageState extends State<HomePage> {
 
   void _loadData() {
     setState(() {
-      _allRecipesFuture = _recipeService.getAllRecipes();
-      _dailyRecipesFuture = _recipeService.getAllRecipes(limit: 3);
+
+      _allRecipesFuture = _recipeService.getAllRecipes(limit: 10);
+      _dailyRecipesFuture = _recipeService.getAllRecipes(limit: 5);
       _categoriesFuture = _recipeService.getMealCategories();
       _loadUserData();
     });
@@ -153,7 +154,6 @@ class _HomePageState extends State<HomePage> {
                 child: Text('Categories', style: AppTheme.subheadingStyle),
               ),
             ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 12)),
             SliverToBoxAdapter(
               child: SizedBox(
@@ -181,7 +181,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
             SliverToBoxAdapter(
               child: Padding(
@@ -193,15 +192,21 @@ class _HomePageState extends State<HomePage> {
                     CupertinoButton(
                       padding: EdgeInsets.zero,
                       child: const Text('See All', style: TextStyle(fontFamily: 'Montserrat', color: AppTheme.primaryColor)),
-                      onPressed: () {},
+                      // PERUBAHAN: Navigasi ke SearchPage
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(builder: (context) => const SearchPage())
+                        );
+                      },
                     ),
                   ],
                 ),
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 12)),
-            _buildFeaturedRecipesGridSliver(),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            // PERUBAHAN: Mengganti Grid dengan List Horizontal
+            _buildFeaturedRecipesHorizontalList(),
+            const SliverToBoxAdapter(child: SizedBox(height: 30)),
           ],
         ),
         _buildCustomAppBar(context),
@@ -209,13 +214,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
-  Widget _buildFeaturedRecipesGridSliver() {
+  /// Widget baru untuk membangun List horizontal dari resep unggulan
+  Widget _buildFeaturedRecipesHorizontalList() {
     return FutureBuilder<List<Recipe>>(
       future: _allRecipesFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SliverToBoxAdapter(child: Center(child: CupertinoActivityIndicator()));
+          return const SliverToBoxAdapter(child: SizedBox(height: AppTheme.cardHeight + AppTheme.spaceForShadow, child: Center(child: CupertinoActivityIndicator())));
         }
         if (snapshot.hasError) {
           return SliverToBoxAdapter(child: Center(child: Text("Error: ${snapshot.error}")));
@@ -225,35 +230,31 @@ class _HomePageState extends State<HomePage> {
         }
         
         final recipes = snapshot.data!;
-        final screenWidth = MediaQuery.of(context).size.width;
-        const horizontalPadding = 16.0 * 2;
-        const crossAxisSpacing = 16.0;
-        const cardHeight = 270.0;
-        final itemWidth = (screenWidth - horizontalPadding - crossAxisSpacing) / 2;
-        final aspectRatio = itemWidth / cardHeight;
-
-        return SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          sliver: SliverGrid(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: aspectRatio,
-              crossAxisSpacing: crossAxisSpacing,
-              mainAxisSpacing: 16,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
+        
+        return SliverToBoxAdapter(
+          child: SizedBox(
+            height: AppTheme.cardHeight + AppTheme.spaceForShadow, // Sesuaikan dengan tinggi RecipeCard
+            child: ListView.builder(
+              clipBehavior: Clip.none,
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+              scrollDirection: Axis.horizontal,
+              itemCount: recipes.length,
+              itemBuilder: (context, index) {
                 final recipe = recipes[index];
-                return RecipeCard(
-                  recipe: recipe,
-                  onTap: () {
-                    Navigator.of(context).push(CupertinoPageRoute(
-                      builder: (context) => RecipeDetail(recipe: recipe),
-                    ));
-                  },
+                // Memberi lebar pada setiap kartu dan jarak di antara mereka
+                return Container(
+                  width: MediaQuery.of(context).size.width * AppTheme.cardWidthRatio, 
+                  margin: const EdgeInsets.only(right: 16.0),
+                  child: RecipeCard(
+                    recipe: recipe,
+                    onTap: () {
+                      Navigator.of(context).push(CupertinoPageRoute(
+                        builder: (context) => RecipeDetail(recipe: recipe),
+                      ));
+                    },
+                  ),
                 );
               },
-              childCount: recipes.length,
             ),
           ),
         );

@@ -106,7 +106,7 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
             child: Stack(
               alignment: Alignment.center,
               children: List.generate(
-                widget.recipes.length.clamp(0, 10), // Tampilkan maks 3 kartu
+                widget.recipes.length.clamp(0, 3), // Tampilkan maks 3 kartu
                 (index) {
                   final itemIndex = (_currentIndex + index) % widget.recipes.length;
                   final recipe = widget.recipes[itemIndex];
@@ -120,9 +120,7 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
     );
   }
 
-  /// --- PERUBAHAN UTAMA: DESAIN KARTU BARU ---
   Widget _buildCard(Recipe recipe, int stackIndex) {
-    // Animasi untuk kartu terdepan (index 0)
     final topCardAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
     final positionOffset = (stackIndex * 12.0) - (_controller.value * 12.0);
     final scale = 1.0 - (stackIndex * 0.05) + (_controller.value * 0.05);
@@ -138,7 +136,7 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
           image: DecorationImage(
             image: NetworkImage(recipe.imageUrl),
             fit: BoxFit.cover,
-            onError: (exception, stackTrace) {}, // Handle error jika gambar gagal dimuat
+            onError: (exception, stackTrace) {}, 
           ),
           boxShadow: [
             BoxShadow(
@@ -152,7 +150,6 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
       ),
     );
 
-    // Terapkan animasi slide out dan fade out hanya untuk kartu paling atas
     if (stackIndex == 0) {
       return AnimatedBuilder(
         animation: topCardAnimation,
@@ -171,14 +168,12 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
       );
     }
 
-    // Terapkan transformasi posisi untuk kartu di belakang
     return Transform.translate(
       offset: Offset(0, positionOffset),
       child: card,
     );
   }
   
-  /// Widget untuk overlay (gradien, judul, avatar) di atas gambar
   Widget _buildCardOverlay(Recipe recipe, int stackIndex) {
     return GestureDetector(
       onTap: stackIndex == 0 ? () {
@@ -187,7 +182,7 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
             builder: (context) => RecipeDetail(recipe: recipe),
           ),
         );
-      } : null, // Hanya kartu terdepan yang bisa di-tap
+      } : null, 
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -203,11 +198,10 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
         ),
         child: Stack(
           children: [
-            // Judul Makanan di Kiri Bawah
             Positioned(
               bottom: 16,
               left: 16,
-              right: 80, // Beri ruang untuk avatar
+              right: 80, 
               child: Text(
                 recipe.title,
                 style: const TextStyle(
@@ -221,7 +215,6 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            // Avatar Penulis di Kanan Bawah
             Positioned(
               bottom: 16,
               right: 16,

@@ -1,9 +1,11 @@
-import 'dart:async';
 import 'dart:io';
+import 'dart:async';
+import 'package:cookmate2/models/meal_ingredient.dart';
+import 'package:path/path.dart';
+import 'package:http/http.dart' as http;
 import 'package:cookmate2/config/pocketbase_client.dart';
 import 'package:cookmate2/models/recipe.dart';
-import 'package:http/http.dart' as http;
-import 'package:path/path.dart';
+import 'package:cookmate2/models/step.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class IngredientInput {
@@ -166,6 +168,32 @@ class RecipeService {
     } catch (e) {
       await _pb.collection('meals').delete(newMealId);
       throw Exception('Failed to save related records. Check API Rules. Error: $e');
+    }
+  }
+
+  Future<List<Step>> getStepsForRecipe(String recipeId) async {
+    try {
+      final records = await _pb.collection('steps').getFullList(
+        filter: 'meal_id = "$recipeId"',
+        sort: '+number', 
+      );
+      return records.map((record) => Step.fromRecord(record)).toList();
+    } catch (e) {
+      print('Error getting steps for recipe $recipeId: $e');
+      return [];
+    }
+  }
+
+  Future<List<MealIngredient>> getIngredientsForRecipe(String recipeId) async {
+    try {
+      final records = await _pb.collection('meal_ingredient').getFullList(
+            filter: 'meal_id = "$recipeId"',
+            expand: 'ingredient_id', // Penting untuk mendapatkan nama bahan
+          );
+      return records.map((record) => MealIngredient.fromRecord(record)).toList();
+    } catch (e) {
+      print('Error getting ingredients for recipe $recipeId: $e');
+      return [];
     }
   }
 }

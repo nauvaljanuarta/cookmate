@@ -22,12 +22,12 @@ class RecipeCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        height: 200,
+        height: AppTheme.cardHeight,
         child: Container(
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: CupertinoColors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppTheme.cardBorderRadius),
             boxShadow: [
               BoxShadow(
                 color: CupertinoColors.systemGrey.withOpacity(0.2),
@@ -93,7 +93,6 @@ class RecipeCard extends StatelessWidget {
     );
   }
 
-  /// Widget untuk menampilkan detail teks di bawah gambar
   Widget _buildRecipeTextDetails() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
