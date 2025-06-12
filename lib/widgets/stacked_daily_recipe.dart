@@ -1,10 +1,11 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Colors;
+import 'package:flutter/material.dart' show CircleAvatar, Colors;
 import 'package:cookmate2/config/theme.dart';
 import 'package:cookmate2/models/recipe.dart';
 import 'package:cookmate2/pages/recipe/detail_recipe_page.dart';
+import 'dart:ui'; // Import untuk BackdropFilter
 
 class StackedRecipeCards extends StatefulWidget {
   final List<Recipe> recipes;
@@ -21,25 +22,15 @@ class StackedRecipeCards extends StatefulWidget {
 class _StackedRecipeCardsState extends State<StackedRecipeCards>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<Offset> _animation;
   int _currentIndex = 0;
-  double _dragStartX = 0;
-  bool _isDragging = false;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 500),
     );
-    _animation = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(1.5, 0),
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    ));
     _controller.addStatusListener(_handleAnimationStatus);
   }
 
@@ -59,47 +50,16 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
     super.dispose();
   }
 
-  void _onDragStart(DragStartDetails details) {
-    setState(() {
-      _dragStartX = details.localPosition.dx;
-      _isDragging = true;
-    });
-  }
-
-  void _onDragUpdate(DragUpdateDetails details) {
-    if (!_isDragging) return;
-
-    final currentDragX = details.localPosition.dx;
-    final dragDifference = currentDragX - _dragStartX;
-
-    // hanya bisa slide ke kanan
-    if (dragDifference > 0) {
-      final dragPercentage =
-          dragDifference / MediaQuery.of(context).size.width;
-      _controller.value = dragPercentage.clamp(0.0, 1.0);
-    }
-  }
-
-  void _onDragEnd(DragEndDetails details) {
-    if (!_isDragging) return;
-
-    setState(() {
-      _isDragging = false;
-    });
-
-    if (_controller.value > 0.3) {
-      _controller.forward();
-    } else {
-      _controller.reverse();
-    }
+  void _onSwipe() {
+    // Memulai animasi swipe
+    _controller.forward();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Menambahkan pengecekan jika daftar resep kosong
     if (widget.recipes.isEmpty) {
       return const SizedBox(
-        height: 320,
+        height: 250,
         child: Center(
           child: Text("No daily recipes available."),
         ),
@@ -114,7 +74,7 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'Daily Recipe',
                 style: AppTheme.subheadingStyle,
               ),
@@ -128,42 +88,28 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
                     color: AppTheme.primaryColor,
                   ),
                 ),
-                onPressed: () {
-                  _controller.forward();
-                },
+                onPressed: _onSwipe,
               ),
             ],
           ),
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: 12),
         SizedBox(
-          height: 380,
+          height: 250, // Menyesuaikan tinggi untuk desain baru yang lebih ringkas
           child: GestureDetector(
-            onHorizontalDragStart: _onDragStart,
-            onHorizontalDragUpdate: _onDragUpdate,
-            onHorizontalDragEnd: _onDragEnd,
+            onHorizontalDragEnd: (details) {
+              // Jika swipe ke kiri (velocity negatif) atau kanan (velocity positif) cukup kencang
+              if (details.primaryVelocity != null && details.primaryVelocity!.abs() > 200) {
+                 _onSwipe();
+              }
+            },
             child: Stack(
               alignment: Alignment.center,
               children: List.generate(
-                widget.recipes.length.clamp(0, 3),
+                widget.recipes.length.clamp(0, 10), // Tampilkan maks 3 kartu
                 (index) {
-                  final itemIndex =
-                      (_currentIndex + index) % widget.recipes.length;
+                  final itemIndex = (_currentIndex + index) % widget.recipes.length;
                   final recipe = widget.recipes[itemIndex];
-                  
-                  // PERBAIKAN: Menukar posisi SlideTransition dan Positioned
-                  if (index == 0) {
-                    // Positioned sekarang menjadi parent langsung dari SlideTransition
-                    return Positioned(
-                      top: -index * 10.0,
-                      child: SlideTransition(
-                        position: _animation,
-                        // _buildCard tidak lagi menggunakan Positioned di dalamnya
-                        child: _buildCard(recipe, index),
-                      ),
-                    );
-                  }
-                  // Kartu lainnya tetap menggunakan Positioned
                   return _buildCard(recipe, index);
                 },
               ).reversed.toList(),
@@ -174,234 +120,123 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
     );
   }
 
-  // PERBAIKAN: _buildCard tidak lagi mengembalikan Positioned secara langsung
-  // agar bisa digunakan di dalam SlideTransition.
+  /// --- PERUBAHAN UTAMA: DESAIN KARTU BARU ---
   Widget _buildCard(Recipe recipe, int stackIndex) {
-    final double scale = 1.0 - (stackIndex * 0.05);
+    // Animasi untuk kartu terdepan (index 0)
+    final topCardAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    final positionOffset = (stackIndex * 12.0) - (_controller.value * 12.0);
+    final scale = 1.0 - (stackIndex * 0.05) + (_controller.value * 0.05);
 
-    final cardContent = GestureDetector(
-      onTap: stackIndex == 0
-          ? () {
-              Navigator.of(context).push(
-                CupertinoPageRoute(
-                  builder: (context) => RecipeDetail(recipe: recipe),
-                ),
-              );
-            }
-          : null,
+    Widget card = Transform.scale(
+      scale: scale,
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.9,
-        height: 360,
-        margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+        height: 250,
+        margin: const EdgeInsets.symmetric(horizontal: 24.0),
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: CupertinoColors.white,
           borderRadius: BorderRadius.circular(20),
+          image: DecorationImage(
+            image: NetworkImage(recipe.imageUrl),
+            fit: BoxFit.cover,
+            onError: (exception, stackTrace) {}, // Handle error jika gambar gagal dimuat
+          ),
           boxShadow: [
             BoxShadow(
-              color: CupertinoColors.systemGrey.withOpacity(0.2),
-              blurRadius: 15,
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
               offset: const Offset(0, 5),
-              spreadRadius: 2,
             ),
           ],
         ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildRecipeImage(recipe),
-            _buildRecipeTextDetails(recipe, stackIndex),
-          ],
-        ),
+        child: _buildCardOverlay(recipe, stackIndex),
       ),
     );
 
-    // Untuk kartu yang tidak dianimasikan, bungkus dengan Positioned
-    if (stackIndex > 0) {
-      return Positioned(
-        top: -stackIndex * 10.0,
-        child: Transform.scale(
-          scale: scale,
-          child: cardContent,
-        ),
+    // Terapkan animasi slide out dan fade out hanya untuk kartu paling atas
+    if (stackIndex == 0) {
+      return AnimatedBuilder(
+        animation: topCardAnimation,
+        child: card,
+        builder: (context, child) {
+          final slideOffset = Offset(-topCardAnimation.value * 1.5, 0);
+          final fadeValue = 1.0 - topCardAnimation.value;
+          return Opacity(
+            opacity: fadeValue.clamp(0.0, 1.0),
+            child: FractionalTranslation(
+              translation: slideOffset,
+              child: child,
+            ),
+          );
+        },
       );
     }
 
-    // Untuk kartu yang dianimasikan (index 0), kembalikan kontennya saja
-    return Transform.scale(
-      scale: scale,
-      child: cardContent,
+    // Terapkan transformasi posisi untuk kartu di belakang
+    return Transform.translate(
+      offset: Offset(0, positionOffset),
+      child: card,
     );
   }
-
-
-  Widget _buildRecipeImage(Recipe recipe) {
-    return Stack(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          height: 200,
-          child: Image.network(
-            recipe.imageUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                color: CupertinoColors.systemGrey5,
-                child: const Center(
-                  child: Icon(
-                    CupertinoIcons.photo,
-                    color: CupertinoColors.systemGrey,
-                    size: 40,
-                  ),
-                ),
-              );
-            },
+  
+  /// Widget untuk overlay (gradien, judul, avatar) di atas gambar
+  Widget _buildCardOverlay(Recipe recipe, int stackIndex) {
+    return GestureDetector(
+      onTap: stackIndex == 0 ? () {
+        Navigator.of(context).push(
+          CupertinoPageRoute(
+            builder: (context) => RecipeDetail(recipe: recipe),
+          ),
+        );
+      } : null, // Hanya kartu terdepan yang bisa di-tap
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              Colors.black.withOpacity(0.1),
+              Colors.black.withOpacity(0.6),
+            ],
+            stops: const [0.5, 0.7, 1.0],
           ),
         ),
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Container(
-            height: 80,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [Colors.black.withOpacity(0.7), Colors.transparent],
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: 12,
-          left: 12,
-          right: 12,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
+        child: Stack(
+          children: [
+            // Judul Makanan di Kiri Bawah
+            Positioned(
+              bottom: 16,
+              left: 16,
+              right: 80, // Beri ruang untuk avatar
+              child: Text(
                 recipe.title,
                 style: const TextStyle(
                   fontFamily: 'Montserrat',
-                  color: CupertinoColors.white,
-                  fontSize: 20,
+                  color: Colors.white,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
+                  shadows: [Shadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2))],
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  const Icon(CupertinoIcons.timer,
-                      color: CupertinoColors.white, size: 14),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${recipe.prepTimeMinutes + recipe.cookTimeMinutes} min',
-                    style: const TextStyle(
-                        fontFamily: 'Montserrat',
-                        color: CupertinoColors.white,
-                        fontSize: 12),
-                  ),
-                  const SizedBox(width: 12),
-                  const Icon(CupertinoIcons.chart_bar,
-                      color: CupertinoColors.white, size: 14),
-                  const SizedBox(width: 4),
-                  Text(
-                    recipe.difficulty,
-                    style: const TextStyle(
-                        fontFamily: 'Montserrat',
-                        color: CupertinoColors.white,
-                        fontSize: 12),
-                  ),
-                ],
+            ),
+            // Avatar Penulis di Kanan Bawah
+            Positioned(
+              bottom: 16,
+              right: 16,
+              child: CircleAvatar(
+                radius: 22,
+                backgroundColor: Colors.white.withOpacity(0.8),
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundImage: NetworkImage(recipe.authorImageUrl),
+                  backgroundColor: CupertinoColors.systemGrey5,
+                ),
               ),
-            ],
-          ),
-        ),
-        Positioned(
-          top: 12,
-          right: 12,
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: CupertinoColors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: CupertinoColors.black.withOpacity(0.1),
-                  blurRadius: 5,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(
-              recipe.isFavorite ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
-              color: recipe.isFavorite
-                  ? CupertinoColors.systemRed
-                  : CupertinoColors.systemGrey,
-              size: 20,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRecipeTextDetails(Recipe recipe, int stackIndex) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            recipe.description,
-            style: const TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 14,
-              color: CupertinoColors.systemGrey,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (stackIndex == 0) ...[
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    recipe.categories.join(' • '),
-                    style: const TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryColor,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const Spacer(),
-                const Icon(
-                  CupertinoIcons.arrow_right,
-                  color: AppTheme.primaryColor,
-                  size: 16,
-                ),
-                const SizedBox(width: 4),
-                const Text(
-                  'View Recipe',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-              ],
             ),
           ],
-        ],
+        ),
       ),
     );
   }

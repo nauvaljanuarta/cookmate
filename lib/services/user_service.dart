@@ -37,7 +37,7 @@ class UserService {
     try {
       final record = await PocketBaseClient.instance.collection('users').create(body: body);
       if (profileImage != null) {
-        final updatedRecord = await PocketBaseClient.instance.collection('users').update(
+        await PocketBaseClient.instance.collection('users').update(
           record.id,
           files: [
             await http.MultipartFile.fromPath(

@@ -21,141 +21,152 @@ class RecipeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-
-        decoration: BoxDecoration(
-          color: CupertinoColors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: CupertinoColors.systemGrey.withOpacity(0.2),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildRecipeImage(),
-            _buildRecipeTextDetails(),
-          ],
+      child: SizedBox(
+        height: 200,
+        child: Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: CupertinoColors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: CupertinoColors.systemGrey.withOpacity(0.2),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: Stack(
+            alignment: Alignment.topCenter,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildRecipeImage(),
+                  const SizedBox(height: 30), // Ruang untuk avatar
+                  _buildRecipeTextDetails(),
+                ],
+              ),
+              _buildAuthorAvatar(),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  /// Widget untuk menampilkan gambar resep
   Widget _buildRecipeImage() {
-    return Stack(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          height: 180, 
-          child: Image.network(
-            recipe.imageUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                color: CupertinoColors.systemGrey5,
-                child: const Center(
-                  child: Icon(CupertinoIcons.photo, color: CupertinoColors.systemGrey, size: 40),
-                ),
-              );
-            },
-          ),
-        ),
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Container(
-            height: 80,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [Colors.black.withOpacity(0.7), Colors.transparent],
-              ),
+    return SizedBox(
+      width: double.infinity,
+      height: 150,
+      child: Image.network(
+        recipe.imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: CupertinoColors.systemGrey5,
+            child: const Center(
+              child: Icon(CupertinoIcons.photo, color: CupertinoColors.systemGrey, size: 40),
             ),
-          ),
-        ),
-        Positioned(
-          bottom: 12,
-          left: 12,
-          right: 12,
-          child: Text(
-            recipe.title,
-            style: const TextStyle(
-              fontFamily: 'Montserrat',
-              color: CupertinoColors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        Positioned(
-          top: 12,
-          right: 12,
-          child: GestureDetector(
-            onTap: onFavoriteTap,
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: CupertinoColors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Icon(
-                isFavorite ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
-                color: isFavorite ? CupertinoColors.systemRed : CupertinoColors.systemGrey,
-                size: 20,
-              ),
-            ),
-          ),
-        ),
-      ],
+          );
+        },
+      ),
     );
   }
 
+  /// Widget untuk menampilkan avatar penulis di posisi kanan
+  Widget _buildAuthorAvatar() {
+    return Positioned(
+      top: 128,
+      right: 16,
+      child: CircleAvatar(
+        radius: 22,
+        backgroundColor: Colors.white,
+        child: CircleAvatar(
+          radius: 20,
+          backgroundImage: NetworkImage(recipe.authorImageUrl),
+          backgroundColor: CupertinoColors.systemGrey5,
+        ),
+      ),
+    );
+  }
+
+  /// Widget untuk menampilkan detail teks di bawah gambar
   Widget _buildRecipeTextDetails() {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            recipe.description,
-            style: const TextStyle(fontFamily: 'Montserrat', fontSize: 14, color: CupertinoColors.systemGrey),
-            maxLines: 2,
+            recipe.title,
+            style: const TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.left,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 4),
+          Text(
+            recipe.description,
+            style: const TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 12,
+              color: CupertinoColors.systemGrey,
+            ),
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.left,
+          ),
+          const SizedBox(height: 4),
           const Divider(color: CupertinoColors.systemGrey5),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 15,
-                backgroundImage: NetworkImage(recipe.authorImageUrl),
-                backgroundColor: CupertinoColors.systemGrey5,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'recipe.authorName',
-                  style: const TextStyle(fontFamily: 'Montserrat', fontSize: 12, color: CupertinoColors.systemGrey),
-                  overflow: TextOverflow.ellipsis,
+          Padding(
+            padding: const EdgeInsets.only(bottom: 2),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: onFavoriteTap,
+                  child: Row(
+                    children: [
+                      Icon(
+                        isFavorite ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
+                        color: isFavorite ? CupertinoColors.systemRed : CupertinoColors.systemGrey,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Favorite',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 10,
+                          color: isFavorite ? CupertinoColors.systemRed : CupertinoColors.systemGrey,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const Icon(CupertinoIcons.arrow_right, color: AppTheme.primaryColor, size: 16),
-              const SizedBox(width: 4),
-              const Text(
-                'View Details',
-                style: TextStyle(fontFamily: 'Montserrat', fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.primaryColor),
-              ),
-            ],
+                Row(
+                  children: const [
+                    Text(
+                      'View Details',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(CupertinoIcons.arrow_right, color: AppTheme.primaryColor, size: 12),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -27,10 +27,9 @@ class _HomePageState extends State<HomePage> {
   final RecipeService _recipeService = RecipeService();
   final UserService _userService = UserService();
 
-  // Variabel Future untuk menampung data dari server
   Future<List<Recipe>>? _allRecipesFuture;
   Future<List<Recipe>>? _dailyRecipesFuture;
-  Future<List<RecordModel>>? _categoriesFuture; // Ditambahkan untuk kategori
+  Future<List<RecordModel>>? _categoriesFuture;
 
   model_user.User? currentUser;
   String? profileImageUrl;
@@ -41,13 +40,11 @@ class _HomePageState extends State<HomePage> {
     _loadData();
   }
 
-  /// Memuat atau memuat ulang semua data yang dibutuhkan halaman.
   void _loadData() {
-    // PERBAIKAN: Gunakan setState agar FutureBuilder diperbarui saat refresh
     setState(() {
       _allRecipesFuture = _recipeService.getAllRecipes();
       _dailyRecipesFuture = _recipeService.getAllRecipes(limit: 3);
-      _categoriesFuture = _recipeService.getMealCategories(); // Memuat kategori
+      _categoriesFuture = _recipeService.getMealCategories();
       _loadUserData();
     });
   }
@@ -80,28 +77,18 @@ class _HomePageState extends State<HomePage> {
             currentIndex: _selectedIndex,
             onTap: (index) {
               if (index == 0 && _selectedIndex != 0) {
-                _loadData(); // Muat ulang data saat kembali ke tab Home
+                _loadData();
               }
               setState(() {
                 _selectedIndex = index;
               });
             },
             items: const [
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.home, size: 20.0 ,), 
-                label: 'Home',),
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.search, size: 20.0 ), 
-                label: 'Explore'),
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.plus_circle_fill, size: 20.0 ), 
-                label: 'Add Meal'),
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.collections, size: 20.0 ), 
-                label: 'Meals Plan'),
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.person, size: 20.0 ), 
-                label: 'Profile'),
+              BottomNavigationBarItem(icon: Icon(CupertinoIcons.home, size: 20.0), label: 'Home'),
+              BottomNavigationBarItem(icon: Icon(CupertinoIcons.search, size: 20.0), label: 'Explore'),
+              BottomNavigationBarItem(icon: Icon(CupertinoIcons.plus_circle_fill, size: 20.0), label: 'Add Meal'),
+              BottomNavigationBarItem(icon: Icon(CupertinoIcons.collections, size: 20.0), label: 'Meals Plan'),
+              BottomNavigationBarItem(icon: Icon(CupertinoIcons.person, size: 20.0), label: 'Profile'),
             ],
           ),
           tabBuilder: (context, index) {
@@ -128,135 +115,149 @@ class _HomePageState extends State<HomePage> {
   Widget _buildHomeScreen(BuildContext context) {
     return Stack(
       children: [
-        // Menggunakan Material untuk RefreshIndicator
-        Material(
-          type: MaterialType.transparency,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 70), // Ruang untuk app bar
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Text('Masak Apa yaa hari ini?', style: AppTheme.headingStyle),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  FutureBuilder<List<Recipe>>(
-                    future: _dailyRecipesFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const SizedBox(height: 320, child: Center(child: CupertinoActivityIndicator()));
-                      }
-                      if (snapshot.hasError) {
-                        return SizedBox(height: 320, child: Center(child: Text("Error: ${snapshot.error}")));
-                      }
-                      if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                        return StackedRecipeCards(recipes: snapshot.data!);
-                      }
-                      return const SizedBox(height: 320, child: Center(child: Text("No daily recipes available.")));
-                    },
-                  ),
-                  
-                  const SizedBox(height: 36),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Text('Categories', style: AppTheme.subheadingStyle),
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  // PERBAIKAN: Menggunakan FutureBuilder untuk menampilkan kategori
-                  SizedBox(
-                    height: 40, // Tinggi disesuaikan untuk pill
-                    child: FutureBuilder<List<RecordModel>>(
-                      future: _categoriesFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CupertinoActivityIndicator());
-                        }
-                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return const Center(child: Text('No categories found.'));
-                        }
-                        final categories = snapshot.data!;
-                        return ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          scrollDirection: Axis.horizontal,
-                          itemCount: categories.length,
-                          itemBuilder: (context, index) {
-                            final category = categories[index];
-                            return CategoryCard(
-                              title: category.data['name'],
-                              onTap: () {
-                                // Aksi saat kategori di-tap (misal: buka halaman search dengan query kategori)
-                              },
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Featured Recipes', style: AppTheme.subheadingStyle),
-                        CupertinoButton(
-                          padding: EdgeInsets.zero,
-                          child: const Text('See All', style: TextStyle(fontFamily: 'Montserrat', color: AppTheme.primaryColor)),
-                          onPressed: () {},
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  FutureBuilder<List<Recipe>>(
-                    future: _allRecipesFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CupertinoActivityIndicator());
-                      }
-                      if (snapshot.hasError) {
-                        return Center(child: Text("Error: ${snapshot.error}"));
-                      }
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Center(child: Padding(padding: EdgeInsets.all(32.0),
-                          child: Text('No featured recipes found.'),
-                        ));
-                      }
-                      
-                      final recipes = snapshot.data!;
-                      return GridView.builder(
-                        padding: const EdgeInsets.fromLTRB(16,0,16,24),
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2, childAspectRatio: 0.57, crossAxisSpacing: 16, mainAxisSpacing: 16),
-                        itemCount: recipes.length,
-                        itemBuilder: (context, index) {
-                          final recipe = recipes[index];
-                          return RecipeCard(
-                            recipe: recipe,
-                            onTap: () {
-                              Navigator.of(context).push(CupertinoPageRoute(
-                                builder: (context) => RecipeDetail(recipe: recipe),
-                              ));
-                            },
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ],
+        CustomScrollView(
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          slivers: [
+            CupertinoSliverRefreshControl(
+              onRefresh: () async => _loadData(),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 70)), 
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text('Masak Apa yaa hari ini?', style: AppTheme.headingStyle),
               ),
             ),
-          ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            SliverToBoxAdapter(
+              child: FutureBuilder<List<Recipe>>(
+                future: _dailyRecipesFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SizedBox(height: 320, child: Center(child: CupertinoActivityIndicator()));
+                  }
+                  if (snapshot.hasError) {
+                    return SizedBox(height: 320, child: Center(child: Text("Error: ${snapshot.error}")));
+                  }
+                  if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                    return StackedRecipeCards(recipes: snapshot.data!);
+                  }
+                  return const SizedBox(height: 320, child: Center(child: Text("No daily recipes available.")));
+                },
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 36)),
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text('Categories', style: AppTheme.subheadingStyle),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 40,
+                child: FutureBuilder<List<RecordModel>>(
+                  future: _categoriesFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CupertinoActivityIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text('No categories found.'));
+                    }
+                    final categories = snapshot.data!;
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: categories.length,
+                      itemBuilder: (context, index) {
+                        final category = categories[index];
+                        return CategoryCard(title: category.data['name'], onTap: () {});
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Featured Recipes', style: AppTheme.subheadingStyle),
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      child: const Text('See All', style: TextStyle(fontFamily: 'Montserrat', color: AppTheme.primaryColor)),
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            _buildFeaturedRecipesGridSliver(),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          ],
+        ),
         _buildCustomAppBar(context),
       ],
+    );
+  }
+
+
+  Widget _buildFeaturedRecipesGridSliver() {
+    return FutureBuilder<List<Recipe>>(
+      future: _allRecipesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SliverToBoxAdapter(child: Center(child: CupertinoActivityIndicator()));
+        }
+        if (snapshot.hasError) {
+          return SliverToBoxAdapter(child: Center(child: Text("Error: ${snapshot.error}")));
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SliverToBoxAdapter(child: Center(child: Padding(padding: EdgeInsets.all(32.0), child: Text('No featured recipes found.'))));
+        }
+        
+        final recipes = snapshot.data!;
+        final screenWidth = MediaQuery.of(context).size.width;
+        const horizontalPadding = 16.0 * 2;
+        const crossAxisSpacing = 16.0;
+        const cardHeight = 270.0;
+        final itemWidth = (screenWidth - horizontalPadding - crossAxisSpacing) / 2;
+        final aspectRatio = itemWidth / cardHeight;
+
+        return SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          sliver: SliverGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: aspectRatio,
+              crossAxisSpacing: crossAxisSpacing,
+              mainAxisSpacing: 16,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final recipe = recipes[index];
+                return RecipeCard(
+                  recipe: recipe,
+                  onTap: () {
+                    Navigator.of(context).push(CupertinoPageRoute(
+                      builder: (context) => RecipeDetail(recipe: recipe),
+                    ));
+                  },
+                );
+              },
+              childCount: recipes.length,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -267,6 +268,10 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
         decoration: BoxDecoration(
           color: CupertinoTheme.of(context).scaffoldBackgroundColor.withOpacity(0.9),
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(20.0),
+            bottomRight: Radius.circular(20.0),
+          ),
           border: const Border(bottom: BorderSide(color: CupertinoColors.systemGrey5, width: 0.5)),
         ),
         child: Row(

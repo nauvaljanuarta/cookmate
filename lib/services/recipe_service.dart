@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-
 import 'package:cookmate2/config/pocketbase_client.dart';
 import 'package:cookmate2/models/recipe.dart';
 import 'package:http/http.dart' as http;
@@ -81,20 +80,17 @@ class RecipeService {
     }
   }
 
-  /// FUNGSI PENCARIAN BARU YANG KOMPREHENSIF
   Future<List<Recipe>> searchRecipes(String query) async {
     if (query.trim().isEmpty) return [];
 
     final Set<String> mealIds = {};
 
-    // 1. Cari berdasarkan nama resep atau deskripsi
     final mealNameFilter = 'name ~ "$query" || description ~ "$query"';
     final mealsByName = await _pb.collection('meals').getFullList(filter: mealNameFilter);
     for (var meal in mealsByName) {
       mealIds.add(meal.id);
     }
 
-    // 2. Cari berdasarkan nama bahan
     final ingredients = await _pb.collection('ingredients').getFullList(filter: 'name ~ "$query"');
     if (ingredients.isNotEmpty) {
       final ingredientIdFilters = ingredients.map((i) => 'ingredient_id = "${i.id}"').join(' || ');
@@ -104,7 +100,6 @@ class RecipeService {
       }
     }
 
-    // 3. Cari berdasarkan nama kategori
     final categories = await _pb.collection('meal_categories').getFullList(filter: 'name ~ "$query"');
     if (categories.isNotEmpty) {
       final categoryIdFilters = categories.map((c) => 'category_id ?~ "${c.id}"').join(' || ');
@@ -116,7 +111,6 @@ class RecipeService {
 
     if (mealIds.isEmpty) return [];
 
-    // 4. Ambil semua resep unik berdasarkan ID yang terkumpul
     final finalFilter = mealIds.map((id) => 'id = "$id"').join(' || ');
     final finalResult = await _pb.collection('meals').getFullList(
       filter: finalFilter,

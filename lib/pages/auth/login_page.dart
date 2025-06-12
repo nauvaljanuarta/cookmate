@@ -281,7 +281,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 24),
 
-                    // Social login options
                     Column(
                       children: [
                         const Row(
@@ -312,7 +311,7 @@ class _LoginPageState extends State<LoginPage> {
 
                         const SizedBox(height: 24),
 
-                        // Social login buttons
+                        
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
@@ -320,21 +319,21 @@ class _LoginPageState extends State<LoginPage> {
                               icon: CupertinoIcons.globe,
                               label: 'Google',
                               onTap: () {
-                                // TODO: Implement Google login
+                                
                               },
                             ),
                             _buildSocialButton(
                               icon: CupertinoIcons.device_phone_portrait,
                               label: 'Apple',
                               onTap: () {
-                                // TODO: Implement Apple login
+                                
                               },
                             ),
                             _buildSocialButton(
                               icon: CupertinoIcons.person_crop_circle,
                               label: 'Facebook',
                               onTap: () {
-                                // TODO: Implement Facebook login
+                                
                               },
                             ),
                           ],
