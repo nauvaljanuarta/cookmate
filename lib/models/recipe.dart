@@ -76,7 +76,7 @@ class Recipe {
       imageUrl: imageUrl, 
       authorName: authorName,
       authorImageUrl: authorImageUrl,
-      difficulty: data['difiiculty'] ?? 'Unknown',
+      difficulty: data['difficulty'] ?? 'Unknown',
       categories: [categoryName],
       prepTimeMinutes: (data['times'] ?? 0).toInt(),
       cookTimeMinutes: 0, 

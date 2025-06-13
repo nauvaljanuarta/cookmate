@@ -53,7 +53,6 @@ class _RecipeDetailState extends State<RecipeDetail> {
                       _buildAuthorInfo(),
                       const SizedBox(height: 20),
 
-                      // Kartu Info Resep
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -91,7 +90,6 @@ class _RecipeDetailState extends State<RecipeDetail> {
     );
   }
 
-  /// Widget untuk tombol aksi di Navigation Bar
   Widget _buildNavBarActions() {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -113,7 +111,6 @@ class _RecipeDetailState extends State<RecipeDetail> {
     );
   }
 
-  /// Widget untuk menampilkan gambar utama dengan sudut membulat
   Widget _buildRecipeImage() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 0),
@@ -135,7 +132,6 @@ class _RecipeDetailState extends State<RecipeDetail> {
     );
   }
 
-  /// Widget untuk menampilkan informasi penulis resep
   Widget _buildAuthorInfo() {
     return Row(
       children: [
@@ -172,7 +168,7 @@ class _RecipeDetailState extends State<RecipeDetail> {
  Widget _buildSectionCard({required String title, required Widget child}) {
   return Container(
     width: double.infinity,
-    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), // Reduced vertical padding from 16.0 to 12.0
+    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), 
     decoration: BoxDecoration(
       color: CupertinoColors.systemGrey6,
       borderRadius: BorderRadius.circular(12),
@@ -184,7 +180,6 @@ class _RecipeDetailState extends State<RecipeDetail> {
           title,
           style: AppTheme.subheadingStyle,
         ),
-        // Removed SizedBox(height: 8) entirely for minimal gap
         child,
       ],
     ),
@@ -206,12 +201,12 @@ Widget _buildIngredientsSection() {
 
         final ingredients = snapshot.data!;
         return Padding(
-          padding: const EdgeInsets.only(top: 4.0), // Minimal top padding to avoid gap
+          padding: const EdgeInsets.only(top: 4.0), 
           child: ListView.separated(
             itemCount: ingredients.length,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            separatorBuilder: (context, index) => const Divider(height: 12), // Reduced from 16 to 12
+            separatorBuilder: (context, index) => const Divider(height: 12), 
             itemBuilder: (context, index) {
               final ingredient = ingredients[index];
               return Row(
@@ -253,7 +248,7 @@ Widget _buildStepsSection() {
 
         final steps = snapshot.data!;
         return Padding(
-          padding: const EdgeInsets.only(top: 2.0), // Minimal top padding to avoid gap
+          padding: const EdgeInsets.only(top: 2.0), 
           child: ListView.builder(
             itemCount: steps.length,
             shrinkWrap: true,
@@ -261,23 +256,23 @@ Widget _buildStepsSection() {
             itemBuilder: (context, index) {
               final step = steps[index];
               return Padding(
-                padding: const EdgeInsets.only(bottom: 8.0), // Reduced from 12 to 8
+                padding: const EdgeInsets.only(bottom: 8.0), 
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 20, // Circle size
+                      width: 20, 
                       height: 20,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppTheme.primaryColor.withOpacity(0.1), // Light background
-                        border: Border.all(color: AppTheme.primaryColor, width: 2), // Border
+                        color: AppTheme.primaryColor.withOpacity(0.1), 
+                        border: Border.all(color: AppTheme.primaryColor, width: 2), 
                       ),
                       child: Center(
                         child: Text(
                           '${step.number}',
                           style: const TextStyle(
-                            fontSize: 12, // Slightly smaller for circle fit
+                            fontSize: 12, 
                             fontWeight: FontWeight.bold,
                             color: AppTheme.primaryColor,
                           ),

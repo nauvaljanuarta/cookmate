@@ -48,24 +48,24 @@ class RecipeService {
   }
 
   Future<List<Recipe>> getUserRecipes(String userId) async {
-      try {
-        final records = await _pb.collection('meals').getFullList(
-              filter: 'user_id = "$userId"',
-              expand: 'user_id,category_id',
-            );
-        return records.map((record) => Recipe.fromRecord(record)).toList();
-      } catch (e) {
-        print('Error fetching user recipes: $e');
-        return [];
-      }
+    try {
+      final records = await _pb.collection('meals').getFullList(
+            filter: 'user_id = "$userId"',
+            expand: 'user_id,category_id',
+          );
+      return records.map((record) => Recipe.fromRecord(record)).toList();
+    } catch (e) {
+      print('Error fetching user recipes: $e');
+      return [];
     }
+  }
 
-    Future<List<Step>> getStepsForRecipe(String recipeId) async {
+  Future<List<Step>> getStepsForRecipe(String recipeId) async {
     try {
       final records = await _pb.collection('steps').getFullList(
-        filter: 'meal_id = "$recipeId"',
-        sort: '+number', 
-      );
+            filter: 'meal_id = "$recipeId"',
+            sort: '+number',
+          );
       return records.map((record) => Step.fromRecord(record)).toList();
     } catch (e) {
       print('Error getting steps for recipe $recipeId: $e');
@@ -88,7 +88,10 @@ class RecipeService {
 
   Future<RecordModel> addIngredient(String name, [String? description]) async {
     try {
-      final body = <String, dynamic>{'name': name, 'description': description ?? ''};
+      final body = <String, dynamic>{
+        'name': name,
+        'description': description ?? ''
+      };
       return await _pb.collection('ingredients').create(body: body);
     } catch (e) {
       print('Error creating ingredient: $e');
@@ -99,8 +102,7 @@ class RecipeService {
   Future<List<RecordModel>> searchIngredients(String query) async {
     if (query.trim().isEmpty) return [];
     try {
-      final result = await _pb.collection('ingredients').getList(
-            perPage: 15, filter: 'name ~ "${query.trim()}"');
+      final result = await _pb.collection('ingredients').getList(perPage: 15, filter: 'name ~ "${query.trim()}"');
       return result.items;
     } catch (e) {
       print('Error searching ingredients: $e');
@@ -141,9 +143,9 @@ class RecipeService {
 
     final finalFilter = mealIds.map((id) => 'id = "$id"').join(' || ');
     final finalResult = await _pb.collection('meals').getFullList(
-      filter: finalFilter,
-      expand: 'user_id,category_id,meal_ingredient(meal_id).ingredient_id',
-    );
+          filter: finalFilter,
+          expand: 'user_id,category_id,meal_ingredient(meal_id).ingredient_id',
+        );
 
     return finalResult.map((record) => Recipe.fromRecord(record)).toList();
   }
@@ -159,14 +161,14 @@ class RecipeService {
     File? imageFile,
   }) async {
     if (!_pb.authStore.isValid) throw Exception("User not authenticated.");
-    
+
     final userId = _pb.authStore.model.id;
 
     final mealBody = <String, dynamic>{
       "name": name,
       "description": description,
       "times": int.tryParse(prepTime.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
-      "difiiculty": difficulty,
+      "difficulty": difficulty,
       "user_id": userId,
       "category_id": categoryIds,
     };
@@ -181,16 +183,28 @@ class RecipeService {
 
     try {
       final stepFutures = instructions.where((t) => t.isNotEmpty).map((text) {
-        final stepBody = {"meal_id": newMealId, "description": text, "number": instructions.indexOf(text) + 1};
+        final stepBody = {
+          "meal_id": newMealId,
+          "description": text,
+          "number": instructions.indexOf(text) + 1
+        };
         return _pb.collection('steps').create(body: stepBody);
       });
 
       final ingredientFutures = ingredients.map((input) {
-        final body = {"meal_id": newMealId, "ingredient_id": input.ingredientId, "quantity": double.tryParse(input.quantity) ?? 0, "unit": input.unit};
+        final body = {
+          "meal_id": newMealId,
+          "ingredient_id": input.ingredientId,
+          "quantity": double.tryParse(input.quantity) ?? 0,
+          "unit": input.unit
+        };
         return _pb.collection('meal_ingredient').create(body: body);
       });
 
-      await Future.wait([...stepFutures, ...ingredientFutures]);
+      await Future.wait([
+        ...stepFutures,
+        ...ingredientFutures
+      ]);
     } catch (e) {
       await _pb.collection('meals').delete(newMealId);
       throw Exception('Failed to save related records. Check API Rules. Error: $e');
@@ -213,7 +227,7 @@ class RecipeService {
       "name": name,
       "description": description,
       "times": int.tryParse(prepTime.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
-      "difiiculty": difficulty,
+      "difficulty": difficulty,
       "category_id": categoryIds,
     };
 
@@ -224,10 +238,9 @@ class RecipeService {
 
     await _pb.collection('meals').update(recipeId, body: mealBody, files: files);
 
-    // 2. Hapus semua 'steps' dan 'meal_ingredient' lama yang terkait
     final oldSteps = await _pb.collection('steps').getFullList(filter: 'meal_id = "$recipeId"');
     final oldIngredients = await _pb.collection('meal_ingredient').getFullList(filter: 'meal_id = "$recipeId"');
-    
+
     final deletionFutures = [
       ...oldSteps.map((s) => _pb.collection('steps').delete(s.id)),
       ...oldIngredients.map((i) => _pb.collection('meal_ingredient').delete(i.id)),
@@ -237,11 +250,20 @@ class RecipeService {
     // 3. Buat kembali 'steps' dan 'meal_ingredient' yang baru
     final creationFutures = [
       ...instructions.where((t) => t.isNotEmpty).map((text) {
-        final stepBody = {"meal_id": recipeId, "description": text, "number": instructions.indexOf(text) + 1};
+        final stepBody = {
+          "meal_id": recipeId,
+          "description": text,
+          "number": instructions.indexOf(text) + 1
+        };
         return _pb.collection('steps').create(body: stepBody);
       }),
       ...ingredients.map((input) {
-        final body = {"meal_id": recipeId, "ingredient_id": input.ingredientId, "quantity": double.tryParse(input.quantity) ?? 0, "unit": input.unit};
+        final body = {
+          "meal_id": recipeId,
+          "ingredient_id": input.ingredientId,
+          "quantity": double.tryParse(input.quantity) ?? 0,
+          "unit": input.unit
+        };
         return _pb.collection('meal_ingredient').create(body: body);
       }),
     ];
@@ -252,18 +274,19 @@ class RecipeService {
     try {
       final stepsRecords = await _pb.collection('steps').getFullList(filter: 'meal_id = "$recipeId"');
       final stepDeletions = stepsRecords.map((step) => _pb.collection('steps').delete(step.id));
-      
+
       final ingredientsRecords = await _pb.collection('meal_ingredient').getFullList(filter: 'meal_id = "$recipeId"');
       final ingredientDeletions = ingredientsRecords.map((ing) => _pb.collection('meal_ingredient').delete(ing.id));
-      
-      await Future.wait([...stepDeletions, ...ingredientDeletions]);
-      
-      await _pb.collection('meals').delete(recipeId);
 
+      await Future.wait([
+        ...stepDeletions,
+        ...ingredientDeletions
+      ]);
+
+      await _pb.collection('meals').delete(recipeId);
     } catch (e) {
       print('Error deleting recipe $recipeId: $e');
       rethrow;
     }
   }
-
 }
