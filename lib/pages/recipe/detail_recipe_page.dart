@@ -4,7 +4,7 @@ import 'package:cookmate2/models/recipe.dart';
 import 'package:cookmate2/models/step.dart' as model_step;
 import 'package:cookmate2/services/recipe_service.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show CircleAvatar, Divider, Theme;
+import 'package:flutter/material.dart' show CircleAvatar, Divider;
 import 'package:pocketbase/pocketbase.dart';
 
 class RecipeDetail extends StatefulWidget {

@@ -43,7 +43,6 @@ class Recipe {
       categoryName = categoryRecords.first.getStringValue('name');
     }
 
-    // Mengambil data pembuat resep (author)
     String authorName = 'Unknown Author';
     String authorImageUrl = 'https://placehold.co/100?text=?';
     final userRecords = record.get<List<RecordModel>>('expand.user_id');
@@ -56,7 +55,6 @@ class Recipe {
       }
     }
     
-    // Membuat URL untuk gambar resep
     String imageUrl;
     if (data['image'] != null && data['image'].isNotEmpty) {
       imageUrl = PocketBaseClient.instance.files.getUrl(record, data['image']).toString();
@@ -64,7 +62,6 @@ class Recipe {
       imageUrl = 'https://placehold.co/600x400?text=No+Image';
     }
 
-    // Membersihkan tag HTML dari deskripsi
     String description = data['description'] ?? 'No Description';
     final RegExp htmlTags = RegExp(r'<[^>]*>');
     description = description.replaceAll(htmlTags, '').replaceAll('&nbsp;', ' ').trim();
@@ -79,8 +76,7 @@ class Recipe {
       difficulty: data['difficulty'] ?? 'Unknown',
       categories: [categoryName],
       times: (data['times'] ?? 0).toInt(),
-     
-      servings: 4, 
+      servings: (data['servings'] ?? 0).toInt(), 
       ingredients: [], 
       steps: [], 
     );

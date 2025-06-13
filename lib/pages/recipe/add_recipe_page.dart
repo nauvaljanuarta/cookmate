@@ -454,7 +454,6 @@ class _AddRecipePageState extends State<AddRecipePage> {
     showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) {
-        // Gunakan StatefulBuilder agar dialog bisa punya state sendiri
         return StatefulBuilder(builder: (BuildContext context, StateSetter modalSetState) {
           return CupertinoActionSheet(
             title: const Text('Select Categories'),
@@ -481,7 +480,6 @@ class _AddRecipePageState extends State<AddRecipePage> {
                 isDefaultAction: true,
                 onPressed: () {
                     Navigator.pop(context);
-                    // Refresh UI utama setelah dialog ditutup
                     setState(() {});
                 },
                 child: const Text('Done')),

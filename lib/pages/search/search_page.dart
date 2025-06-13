@@ -39,7 +39,6 @@ class _SearchPageState extends State<SearchPage> {
 
   void _loadInitialData() {
     _loadRecentSearches();
-    // Inisialisasi future di sini
     _categoriesFuture = _recipeService.getMealCategories();
     _exploreRecipesFuture = _recipeService.getAllRecipes(limit: 10);
   }
@@ -51,7 +50,6 @@ class _SearchPageState extends State<SearchPage> {
     super.dispose();
   }
 
-  // --- Logika Pencarian ---
 
   void _onSearchChanged(String query) {
     _debounce?.cancel();
@@ -167,7 +165,7 @@ class _SearchPageState extends State<SearchPage> {
           padding: const EdgeInsets.all(16),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 0.57,
+            childAspectRatio: 0.64,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
           ),
@@ -251,7 +249,7 @@ class _SearchPageState extends State<SearchPage> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, childAspectRatio: 0.7, crossAxisSpacing: 16, mainAxisSpacing: 16),
+                crossAxisCount: 2, childAspectRatio: 0.64, crossAxisSpacing: 16, mainAxisSpacing: 16),
               itemCount: recipes.length,
               itemBuilder: (context, index) {
                 final recipe = recipes[index];

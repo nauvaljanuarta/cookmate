@@ -109,6 +109,7 @@ class RecipeCard extends StatelessWidget {
             ),
             textAlign: TextAlign.left,
             overflow: TextOverflow.ellipsis,
+            maxLines: 1,
           ),
           const SizedBox(height: 4),
           Text(
@@ -118,10 +119,26 @@ class RecipeCard extends StatelessWidget {
               fontSize: 12,
               color: CupertinoColors.systemGrey,
             ),
+            maxLines: 2, 
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.left,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
+
+          if (recipe.categories.isNotEmpty)
+            Text(
+              recipe.categories.join(' • '), 
+              style: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primaryColor, 
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+            ),
+
+          const SizedBox(height: 1),
           const Divider(color: CupertinoColors.systemGrey5),
           Padding(
             padding: const EdgeInsets.only(bottom: 2),

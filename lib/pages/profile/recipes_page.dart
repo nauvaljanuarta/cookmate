@@ -61,24 +61,24 @@ class _RecipesPageState extends State<RecipesPage> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('Hapus Resep'),
-        content: const Text('Apakah Anda yakin ingin menghapus resep ini?'),
+        title: const Text('Delete Recipe'),
+        content: const Text('Do you want to delete your recipe?'),
         actions: [
           CupertinoDialogAction(
-            child: const Text('Batal'),
+            child: const Text('Cancel'),
             onPressed: () => Navigator.of(context).pop(),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
-            child: const Text('Hapus'),
+            child: const Text('Delete'),
             onPressed: () async {
-              Navigator.of(context).pop(); // Tutup dialog konfirmasi
+              Navigator.of(context).pop(); 
               try {
                 await _recipeService.deleteRecipe(recipeId);
-                _showFeedbackDialog('Success', 'Resep berhasil dihapus');
+                _showFeedbackDialog('Success', 'Recipe Deleted');
                 _refreshRecipes();
               } catch (e) {
-                _showFeedbackDialog('Error', 'Gagal menghapus resep: $e');
+                _showFeedbackDialog('Error', 'Failed to delete your recipe: $e');
               }
             },
           ),
