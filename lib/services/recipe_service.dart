@@ -60,6 +60,32 @@ class RecipeService {
       }
     }
 
+    Future<List<Step>> getStepsForRecipe(String recipeId) async {
+    try {
+      final records = await _pb.collection('steps').getFullList(
+        filter: 'meal_id = "$recipeId"',
+        sort: '+number', 
+      );
+      return records.map((record) => Step.fromRecord(record)).toList();
+    } catch (e) {
+      print('Error getting steps for recipe $recipeId: $e');
+      return [];
+    }
+  }
+
+  Future<List<MealIngredient>> getIngredientsForRecipe(String recipeId) async {
+    try {
+      final records = await _pb.collection('meal_ingredient').getFullList(
+            filter: 'meal_id = "$recipeId"',
+            expand: 'ingredient_id', // Penting untuk mendapatkan nama bahan
+          );
+      return records.map((record) => MealIngredient.fromRecord(record)).toList();
+    } catch (e) {
+      print('Error getting ingredients for recipe $recipeId: $e');
+      return [];
+    }
+  }
+
   Future<RecordModel> addIngredient(String name, [String? description]) async {
     try {
       final body = <String, dynamic>{'name': name, 'description': description ?? ''};
@@ -171,29 +197,73 @@ class RecipeService {
     }
   }
 
-  Future<List<Step>> getStepsForRecipe(String recipeId) async {
+  Future<void> updateRecipe({
+    required String recipeId,
+    required String name,
+    required String description,
+    required String prepTime,
+    required String difficulty,
+    required List<String> categoryIds,
+    required List<IngredientInput> ingredients,
+    required List<String> instructions,
+    File? imageFile,
+  }) async {
+    // 1. Update data utama pada koleksi 'meals'
+    final mealBody = <String, dynamic>{
+      "name": name,
+      "description": description,
+      "times": int.tryParse(prepTime.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
+      "difiiculty": difficulty,
+      "category_id": categoryIds,
+    };
+
+    List<http.MultipartFile> files = [];
+    if (imageFile != null) {
+      files.add(await http.MultipartFile.fromPath('image', imageFile.path, filename: basename(imageFile.path)));
+    }
+
+    await _pb.collection('meals').update(recipeId, body: mealBody, files: files);
+
+    // 2. Hapus semua 'steps' dan 'meal_ingredient' lama yang terkait
+    final oldSteps = await _pb.collection('steps').getFullList(filter: 'meal_id = "$recipeId"');
+    final oldIngredients = await _pb.collection('meal_ingredient').getFullList(filter: 'meal_id = "$recipeId"');
+    
+    final deletionFutures = [
+      ...oldSteps.map((s) => _pb.collection('steps').delete(s.id)),
+      ...oldIngredients.map((i) => _pb.collection('meal_ingredient').delete(i.id)),
+    ];
+    await Future.wait(deletionFutures);
+
+    // 3. Buat kembali 'steps' dan 'meal_ingredient' yang baru
+    final creationFutures = [
+      ...instructions.where((t) => t.isNotEmpty).map((text) {
+        final stepBody = {"meal_id": recipeId, "description": text, "number": instructions.indexOf(text) + 1};
+        return _pb.collection('steps').create(body: stepBody);
+      }),
+      ...ingredients.map((input) {
+        final body = {"meal_id": recipeId, "ingredient_id": input.ingredientId, "quantity": double.tryParse(input.quantity) ?? 0, "unit": input.unit};
+        return _pb.collection('meal_ingredient').create(body: body);
+      }),
+    ];
+    await Future.wait(creationFutures);
+  }
+
+  Future<void> deleteRecipe(String recipeId) async {
     try {
-      final records = await _pb.collection('steps').getFullList(
-        filter: 'meal_id = "$recipeId"',
-        sort: '+number', 
-      );
-      return records.map((record) => Step.fromRecord(record)).toList();
+      final stepsRecords = await _pb.collection('steps').getFullList(filter: 'meal_id = "$recipeId"');
+      final stepDeletions = stepsRecords.map((step) => _pb.collection('steps').delete(step.id));
+      
+      final ingredientsRecords = await _pb.collection('meal_ingredient').getFullList(filter: 'meal_id = "$recipeId"');
+      final ingredientDeletions = ingredientsRecords.map((ing) => _pb.collection('meal_ingredient').delete(ing.id));
+      
+      await Future.wait([...stepDeletions, ...ingredientDeletions]);
+      
+      await _pb.collection('meals').delete(recipeId);
+
     } catch (e) {
-      print('Error getting steps for recipe $recipeId: $e');
-      return [];
+      print('Error deleting recipe $recipeId: $e');
+      rethrow;
     }
   }
 
-  Future<List<MealIngredient>> getIngredientsForRecipe(String recipeId) async {
-    try {
-      final records = await _pb.collection('meal_ingredient').getFullList(
-            filter: 'meal_id = "$recipeId"',
-            expand: 'ingredient_id', // Penting untuk mendapatkan nama bahan
-          );
-      return records.map((record) => MealIngredient.fromRecord(record)).toList();
-    } catch (e) {
-      print('Error getting ingredients for recipe $recipeId: $e');
-      return [];
-    }
-  }
 }

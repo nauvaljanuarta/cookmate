@@ -1,0 +1,2 @@
+C:/Folder Janu/Assignment/MK PRODI/SEM 4/Mobile App - Praktikum/cookmate2/android/app/.cxx/RelWithDebInfo/5it6q2l4/x86_64/CMakeFiles/edit_cache.dir
+C:/Folder Janu/Assignment/MK PRODI/SEM 4/Mobile App - Praktikum/cookmate2/android/app/.cxx/RelWithDebInfo/5it6q2l4/x86_64/CMakeFiles/rebuild_cache.dir

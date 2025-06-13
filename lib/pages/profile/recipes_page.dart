@@ -53,7 +53,6 @@ class _RecipesPageState extends State<RecipesPage> {
             );
           }
 
-          // Jika data berhasil diambil, tampilkan daftar resep.
           final recipes = snapshot.data!;
           return ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
