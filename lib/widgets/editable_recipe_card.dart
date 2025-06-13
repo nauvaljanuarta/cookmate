@@ -20,15 +20,15 @@ class EditableRecipeCard extends StatelessWidget {
     showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) => CupertinoActionSheet(
-        title: Text(recipe.title),
-        message: const Text('Pilih aksi yang diinginkan untuk resep ini.'),
+        title: Text(recipe.name),
+        message: const Text('Choose One Below Delete Or Update?'),
         actions: <CupertinoActionSheetAction>[
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(context);
               onEdit(); // Memanggil fungsi onEdit dari parent
             },
-            child: const Text('Edit Resep'),
+            child: const Text('Recipe edit'),
           ),
           CupertinoActionSheetAction(
             isDestructiveAction: true,
@@ -36,13 +36,13 @@ class EditableRecipeCard extends StatelessWidget {
               Navigator.pop(context);
               onDelete(); // Memanggil fungsi onDelete dari parent
             },
-            child: const Text('Hapus Resep'),
+            child: const Text('Recipe Delete'),
           ),
         ],
         cancelButton: CupertinoActionSheetAction(
           isDefaultAction: true,
           onPressed: () => Navigator.pop(context),
-          child: const Text('Batal'),
+          child: const Text('Cancel'),
         ),
       ),
     );
@@ -91,7 +91,7 @@ class EditableRecipeCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    recipe.title,
+                    recipe.name,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -101,8 +101,8 @@ class EditableRecipeCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    // Menampilkan kategori pertama sebagai info tambahan
-                    recipe.categories.isNotEmpty ? recipe.categories.first : 'Tanpa Kategori',
+                    // PERBAIKAN: Mengambil item pertama dari List<String>
+                    recipe.categories.isNotEmpty ? recipe.categories.first : 'Uncategorized',
                     style: const TextStyle(fontSize: 12, color: CupertinoColors.systemGrey),
                   ),
                 ],

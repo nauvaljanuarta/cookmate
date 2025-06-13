@@ -3,15 +3,15 @@ import 'package:pocketbase/pocketbase.dart';
 
 class Recipe {
   final String id;
-  final String title;
+  final String name;
   final String description;
   final String imageUrl;
   final String authorName;
   final String authorImageUrl;
   final List<String> ingredients;
   final List<String> steps;
-  final int prepTimeMinutes;
-  final int cookTimeMinutes;
+ 
+  final int times;
   final int servings;
   final String difficulty;
   final List<String> categories;
@@ -19,15 +19,15 @@ class Recipe {
 
   Recipe({
     required this.id,
-    required this.title,
+    required this.name,
     required this.description,
     this.imageUrl = 'https://placehold.co/600x400?text=No+Image',
     required this.authorName,
     required this.authorImageUrl,
     required this.ingredients,
     required this.steps,
-    required this.prepTimeMinutes,
-    required this.cookTimeMinutes,
+    required this.times,
+    
     required this.servings,
     required this.difficulty,
     required this.categories,
@@ -71,15 +71,15 @@ class Recipe {
 
     return Recipe(
       id: record.id,
-      title: data['name'] ?? 'No Title',
+      name: data['name'] ?? 'No name',
       description: description,
       imageUrl: imageUrl, 
       authorName: authorName,
       authorImageUrl: authorImageUrl,
       difficulty: data['difficulty'] ?? 'Unknown',
       categories: [categoryName],
-      prepTimeMinutes: (data['times'] ?? 0).toInt(),
-      cookTimeMinutes: 0, 
+      times: (data['times'] ?? 0).toInt(),
+     
       servings: 4, 
       ingredients: [], 
       steps: [], 

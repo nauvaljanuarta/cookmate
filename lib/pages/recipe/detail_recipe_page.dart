@@ -1,10 +1,11 @@
 import 'package:cookmate2/config/theme.dart';
 import 'package:cookmate2/models/meal_ingredient.dart';
 import 'package:cookmate2/models/recipe.dart';
-import 'package:cookmate2/models/step.dart';
+import 'package:cookmate2/models/step.dart' as model_step;
 import 'package:cookmate2/services/recipe_service.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show CircleAvatar, Divider;
+import 'package:flutter/material.dart' show CircleAvatar, Divider, Theme;
+import 'package:pocketbase/pocketbase.dart';
 
 class RecipeDetail extends StatefulWidget {
   final Recipe recipe;
@@ -20,13 +21,16 @@ class RecipeDetail extends StatefulWidget {
 
 class _RecipeDetailState extends State<RecipeDetail> {
   final RecipeService _recipeService = RecipeService();
-  late final Future<List<Step>> _stepsFuture;
-  late final Future<List<MealIngredient>> _ingredientsFuture;
+  late final Future<List<model_step.Step>> _stepsFuture;
+  
+  // PERBAIKAN 1: Ubah tipe Future menjadi List<RecordModel>
+  late final Future<List<RecordModel>> _ingredientsFuture;
 
   @override
   void initState() {
     super.initState();
     _stepsFuture = _recipeService.getStepsForRecipe(widget.recipe.id);
+    // Panggilan ini sekarang valid
     _ingredientsFuture = _recipeService.getIngredientsForRecipe(widget.recipe.id);
   }
 
@@ -36,7 +40,7 @@ class _RecipeDetailState extends State<RecipeDetail> {
       child: CustomScrollView(
         slivers: [
           CupertinoSliverNavigationBar(
-            largeTitle: Text(widget.recipe.title),
+            largeTitle: Text(widget.recipe.name),
             trailing: _buildNavBarActions(),
           ),
           SliverToBoxAdapter(
@@ -56,8 +60,8 @@ class _RecipeDetailState extends State<RecipeDetail> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildInfoCard(context, CupertinoIcons.timer, '${widget.recipe.prepTimeMinutes + widget.recipe.cookTimeMinutes} min', 'Total Time'),
-                          _buildInfoCard(context, CupertinoIcons.chart_bar, widget.recipe.difficulty, 'Difficulty'),
+                          _buildInfoCard(context, CupertinoIcons.timer, '${widget.recipe.times} min', 'Total Time'),
+                          _buildInfoCard(context, CupertinoIcons.chart_bar_alt_fill, widget.recipe.difficulty, 'Difficulty'),
                           _buildInfoCard(context, CupertinoIcons.person_2, '${widget.recipe.servings}', 'Servings'),
                         ],
                       ),
@@ -65,7 +69,7 @@ class _RecipeDetailState extends State<RecipeDetail> {
                       const SizedBox(height: 20),
                       _buildIngredientsSection(),
                       
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
                       
                       _buildStepsSection(),
 
@@ -165,137 +169,140 @@ class _RecipeDetailState extends State<RecipeDetail> {
     );
   }
 
- Widget _buildSectionCard({required String title, required Widget child}) {
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0), 
-    decoration: BoxDecoration(
-      color: CupertinoColors.systemGrey6,
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: AppTheme.subheadingStyle,
-        ),
-        child,
-      ],
-    ),
-  );
-}
-
-Widget _buildIngredientsSection() {
-  return _buildSectionCard(
-    title: 'Ingredients',
-    child: FutureBuilder<List<MealIngredient>>(
-      future: _ingredientsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CupertinoActivityIndicator());
-        }
-        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No ingredients found.'));
-        }
-
-        final ingredients = snapshot.data!;
-        return Padding(
-          padding: const EdgeInsets.only(top: 4.0), 
-          child: ListView.separated(
-            itemCount: ingredients.length,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            separatorBuilder: (context, index) => const Divider(height: 12), 
-            itemBuilder: (context, index) {
-              final ingredient = ingredients[index];
-              return Row(
-                children: [
-                  const Icon(CupertinoIcons.circle_filled, size: 20, color: AppTheme.primaryColor),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      ingredient.name,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                  Text(
-                    '${ingredient.quantity.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '')} ${ingredient.unit}'.trim(),
-                    style: const TextStyle(fontSize: 16, color: CupertinoColors.systemGrey2),
-                  ),
-                ],
-              );
-            },
+  Widget _buildSectionCard({required String title, required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      decoration: BoxDecoration(
+        color: CupertinoColors.systemGrey6,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: AppTheme.subheadingStyle,
           ),
-        );
-      },
-    ),
-  );
-}
+          const SizedBox(height: 8),
+          child,
+        ],
+      ),
+    );
+  }
 
-Widget _buildStepsSection() {
-  return _buildSectionCard(
-    title: 'Instructions',
-    child: FutureBuilder<List<Step>>(
-      future: _stepsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CupertinoActivityIndicator());
-        }
-        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No instructions available.'));
-        }
+  Widget _buildIngredientsSection() {
+    return _buildSectionCard(
+      title: 'Ingredients',
+      // PERBAIKAN 2: Sesuaikan tipe FutureBuilder
+      child: FutureBuilder<List<RecordModel>>(
+        future: _ingredientsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CupertinoActivityIndicator());
+          }
+          if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No ingredients found.'));
+          }
 
-        final steps = snapshot.data!;
-        return Padding(
-          padding: const EdgeInsets.only(top: 2.0), 
-          child: ListView.builder(
-            itemCount: steps.length,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemBuilder: (context, index) {
-              final step = steps[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8.0), 
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          // PERBAIKAN 3: Ubah RecordModel menjadi MealIngredient sebelum ditampilkan
+          final ingredients = snapshot.data!.map((record) => MealIngredient.fromRecord(record)).toList();
+          
+          return Padding(
+            padding: const EdgeInsets.only(top: 4.0),
+            child: ListView.separated(
+              itemCount: ingredients.length,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              separatorBuilder: (context, index) => const Divider(height: 20),
+              itemBuilder: (context, index) {
+                final ingredient = ingredients[index];
+                return Row(
                   children: [
-                    Container(
-                      width: 20, 
-                      height: 20,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppTheme.primaryColor.withOpacity(0.1), 
-                        border: Border.all(color: AppTheme.primaryColor, width: 2), 
+                    const Icon(CupertinoIcons.checkmark_alt_circle_fill, size: 20, color: AppTheme.primaryColor),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        ingredient.name,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                       ),
-                      child: Center(
-                        child: Text(
-                          '${step.number}',
-                          style: const TextStyle(
-                            fontSize: 12, 
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor,
+                    ),
+                    Text(
+                      '${ingredient.quantity.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '')} ${ingredient.unit}'.trim(),
+                      style: const TextStyle(fontSize: 16, color: CupertinoColors.systemGrey),
+                    ),
+                  ],
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildStepsSection() {
+    return _buildSectionCard(
+      title: 'Instructions',
+      child: FutureBuilder<List<model_step.Step>>(
+        future: _stepsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CupertinoActivityIndicator());
+          }
+          if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No instructions available.'));
+          }
+
+          final steps = snapshot.data!;
+          return Padding(
+            padding: const EdgeInsets.only(top: 2.0),
+            child: ListView.builder(
+              itemCount: steps.length,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemBuilder: (context, index) {
+                final step = steps[index];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.primaryColor, width: 2),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${step.number}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryColor,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        step.description,
-                        style: const TextStyle(fontSize: 16, height: 1.5),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          step.description,
+                          style: const TextStyle(fontSize: 16, height: 1.4),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        );
-      },
-    ),
-  );
-}
+                    ],
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   Widget _buildInfoCard(BuildContext context, IconData icon, String value, String label) {
     return Expanded(
@@ -308,6 +315,7 @@ Widget _buildStepsSection() {
             Icon(icon, color: AppTheme.primaryColor, size: 24),
             const SizedBox(height: 8),
             Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), textAlign: TextAlign.center),
+            const SizedBox(height: 2),
             Text(label, style: const TextStyle(color: CupertinoColors.systemGrey, fontSize: 12), textAlign: TextAlign.center),
           ],
         ),

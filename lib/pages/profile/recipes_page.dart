@@ -1,8 +1,11 @@
 import 'package:cookmate2/config/pocketbase_client.dart';
+import 'package:cookmate2/config/theme.dart';
 import 'package:cookmate2/models/recipe.dart';
+import 'package:cookmate2/pages/recipe/add_recipe_page.dart';
 import 'package:cookmate2/pages/recipe/detail_recipe_page.dart';
+import 'package:cookmate2/pages/recipe/edit_recipe_page.dart';
 import 'package:cookmate2/services/recipe_service.dart';
-import 'package:cookmate2/widgets/recipe_card.dart';
+import 'package:cookmate2/widgets/editable_recipe_card.dart';
 import 'package:flutter/cupertino.dart';
 
 class RecipesPage extends StatefulWidget {
@@ -15,16 +18,73 @@ class RecipesPage extends StatefulWidget {
 class _RecipesPageState extends State<RecipesPage> {
   final RecipeService _recipeService = RecipeService();
   late Future<List<Recipe>> _userRecipesFuture;
+  String? _userId;
 
   @override
   void initState() {
     super.initState();
-    final userId = PocketBaseClient.instance.authStore.model?.id;
-    if (userId != null) {
-      _userRecipesFuture = _recipeService.getUserRecipes(userId);
+    _userId = PocketBaseClient.instance.authStore.model?.id;
+    _refreshRecipes();
+  }
+
+  void _refreshRecipes() {
+    if (_userId != null) {
+      setState(() {
+        _userRecipesFuture = _recipeService.getUserRecipes(_userId!);
+      });
     } else {
-      _userRecipesFuture = Future.value([]);
+      setState(() {
+        _userRecipesFuture = Future.value([]);
+      });
     }
+  }
+
+  // PERBAIKAN: Menggunakan CupertinoAlertDialog untuk feedback
+  void _showFeedbackDialog(String title, String content) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            child: const Text('OK'),
+            onPressed: () => Navigator.of(context).pop(),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _deleteRecipe(String recipeId) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Hapus Resep'),
+        content: const Text('Apakah Anda yakin ingin menghapus resep ini?'),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('Batal'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            child: const Text('Hapus'),
+            onPressed: () async {
+              Navigator.of(context).pop(); // Tutup dialog konfirmasi
+              try {
+                await _recipeService.deleteRecipe(recipeId);
+                _showFeedbackDialog('Success', 'Resep berhasil dihapus');
+                _refreshRecipes();
+              } catch (e) {
+                _showFeedbackDialog('Error', 'Gagal menghapus resep: $e');
+              }
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -45,10 +105,37 @@ class _RecipesPageState extends State<RecipesPage> {
           }
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
-              child: Text(
-                'Anda belum memiliki resep.\nAyo buat resep pertamamu!',
-                textAlign: TextAlign.center,
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    "You don't have any recipes.",
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      Navigator.of(context)
+                          .push(
+                            CupertinoPageRoute(builder: (context) => const AddRecipePage()),
+                          )
+                          .then((value) {
+                            if (value == true) {
+                              _refreshRecipes();
+                            }
+                          });
+                    },
+                    child: const Text(
+                      'Create Your First Recipe',
+                      style: TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             );
           }
@@ -61,7 +148,7 @@ class _RecipesPageState extends State<RecipesPage> {
               final recipe = recipes[index];
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: RecipeCard(
+                child: EditableRecipeCard(
                   recipe: recipe,
                   onTap: () {
                     Navigator.of(context).push(
@@ -69,6 +156,21 @@ class _RecipesPageState extends State<RecipesPage> {
                         builder: (context) => RecipeDetail(recipe: recipe),
                       ),
                     );
+                  },
+                  onEdit: () {
+                    Navigator.of(context).push<bool>(
+                      CupertinoPageRoute(
+                        builder: (context) => EditRecipePage(recipe: recipe),
+                      ),
+                    ).then((result) {
+                      // Refresh jika halaman edit mengembalikan `true`
+                      if (result == true) {
+                        _refreshRecipes();
+                      }
+                    });
+                  },
+                  onDelete: () {
+                    _deleteRecipe(recipe.id);
                   },
                 ),
               );

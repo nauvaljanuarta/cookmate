@@ -87,7 +87,7 @@ class _HomePageState extends State<HomePage> {
             items: const [
               BottomNavigationBarItem(icon: Icon(CupertinoIcons.home, size: 20.0), label: 'Home'),
               BottomNavigationBarItem(icon: Icon(CupertinoIcons.search, size: 20.0), label: 'Explore'),
-              BottomNavigationBarItem(icon: Icon(CupertinoIcons.plus_circle_fill, size: 20.0), label: 'Add Meal'),
+              BottomNavigationBarItem(icon: Icon(CupertinoIcons.plus_circle_fill, size: 20.0), label: 'Add Recipe'),
               BottomNavigationBarItem(icon: Icon(CupertinoIcons.collections, size: 20.0), label: 'Meals Plan'),
               BottomNavigationBarItem(icon: Icon(CupertinoIcons.person, size: 20.0), label: 'Profile'),
             ],

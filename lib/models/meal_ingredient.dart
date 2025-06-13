@@ -12,7 +12,6 @@ class MealIngredient {
   });
 
   factory MealIngredient.fromRecord(RecordModel record) {
-    // Mengakses data dari 'expand' untuk mendapatkan nama bahan
     final ingredientRecord = (record.expand['ingredient_id'] ?? []).isNotEmpty
         ? record.expand['ingredient_id']!.first
         : null;
@@ -24,16 +23,13 @@ class MealIngredient {
     );
   }
 
-  // Getter untuk memformat tampilan bahan menjadi lebih rapi, contoh: "2 sdm Garam"
   String get formatted {
-    // Hanya tampilkan jumlah jika lebih dari 0
     final quantityString = quantity > 0
         ? (quantity.truncateToDouble() == quantity
             ? quantity.toInt().toString()
             : quantity.toString())
         : '';
 
-    // Menggabungkan semua bagian dan membersihkan spasi berlebih
     return '$quantityString $unit $name'.trim().replaceAll(RegExp(r'\s+'), ' ');
   }
 }

@@ -101,7 +101,7 @@ class RecipeCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            recipe.title,
+            recipe.name,
             style: const TextStyle(
               fontFamily: 'Montserrat',
               fontSize: 16,

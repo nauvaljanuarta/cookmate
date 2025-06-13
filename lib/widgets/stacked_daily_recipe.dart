@@ -203,7 +203,7 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
               left: 16,
               right: 80, 
               child: Text(
-                recipe.title,
+                recipe.name,
                 style: const TextStyle(
                   fontFamily: 'Montserrat',
                   color: Colors.white,
