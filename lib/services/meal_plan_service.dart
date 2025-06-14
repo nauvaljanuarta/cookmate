@@ -90,6 +90,21 @@ Future<List<Day>> getDays() async {
     }
   }
 
+   Future<Set<String>> getAllPlannedRecipeIds() async {
+    if (!_pb.authStore.isValid) return {};
+    final userId = _pb.authStore.model.id;
+    try {
+      final records = await _pb.collection('meal_plans').getFullList(
+            filter: 'user_id = "$userId"',
+            fields: 'meal_id', 
+          );
+      return records.map((record) => record.getStringValue('meal_id')).toSet();
+    } catch (e) {
+      print('Error fetching all planned recipe IDs: $e');
+      return {};
+    }
+  }
+
   Future<void> updateMealPlanDay(String mealPlanId, String newDayId) async {
     final body = <String, dynamic>{
       "day_id": newDayId,

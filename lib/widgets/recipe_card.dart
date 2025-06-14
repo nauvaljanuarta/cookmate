@@ -6,57 +6,62 @@ import 'package:flutter/material.dart';
 class RecipeCard extends StatelessWidget {
   final Recipe recipe;
   final VoidCallback onTap;
-  final bool isFavorite;
-  final VoidCallback? onFavoriteTap;
+  // Ganti isFavorite menjadi isPlanned
+  final bool isPlanned;
 
   const RecipeCard({
     super.key,
     required this.recipe,
     required this.onTap,
-    this.isFavorite = false,
-    this.onFavoriteTap,
+    this.isPlanned = false, // Default value false
   });
 
   @override
   Widget build(BuildContext context) {
+    // Bagian ini sudah benar dari kode Anda sebelumnya, 
+    // dengan shadow dan ClipRRect
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
         height: AppTheme.cardHeight,
         child: Container(
-          clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            color: CupertinoColors.white,
+            color: Colors.transparent,
             borderRadius: BorderRadius.circular(AppTheme.cardBorderRadius),
             boxShadow: [
               BoxShadow(
                 color: CupertinoColors.systemGrey.withOpacity(0.2),
                 blurRadius: 15,
                 offset: const Offset(0, 5),
-                spreadRadius: 2,
+                spreadRadius: 1,
               ),
             ],
           ),
-          child: Stack(
-            alignment: Alignment.topCenter,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppTheme.cardBorderRadius),
+            child: Container(
+              color: CupertinoColors.white,
+              child: Stack(
+                alignment: Alignment.topCenter,
                 children: [
-                  _buildRecipeImage(),
-                  const SizedBox(height: 30), // Ruang untuk avatar
-                  _buildRecipeTextDetails(),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildRecipeImage(),
+                      const SizedBox(height: 30),
+                      _buildRecipeTextDetails(context), 
+                    ],
+                  ),
+                  _buildAuthorAvatar(),
                 ],
               ),
-              _buildAuthorAvatar(),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  /// Widget untuk menampilkan gambar resep
   Widget _buildRecipeImage() {
     return SizedBox(
       width: double.infinity,
@@ -93,7 +98,7 @@ class RecipeCard extends StatelessWidget {
     );
   }
 
-  Widget _buildRecipeTextDetails() {
+   Widget _buildRecipeTextDetails(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -119,7 +124,7 @@ class RecipeCard extends StatelessWidget {
               fontSize: 12,
               color: CupertinoColors.systemGrey,
             ),
-            maxLines: 2, 
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.left,
           ),
@@ -127,15 +132,15 @@ class RecipeCard extends StatelessWidget {
 
           if (recipe.categories.isNotEmpty)
             Text(
-              recipe.categories.join(' • '), 
+              recipe.categories.join(' • '),
               style: const TextStyle(
                 fontFamily: 'Montserrat',
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.primaryColor, 
+                color: AppTheme.primaryColor,
               ),
               overflow: TextOverflow.ellipsis,
-              maxLines: 2,
+              maxLines: 1,
             ),
 
           const SizedBox(height: 1),
@@ -145,27 +150,28 @@ class RecipeCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                GestureDetector(
-                  onTap: onFavoriteTap,
-                  child: Row(
-                    children: [
+                if (isPlanned)
+                  Row(
+                    children: const [
                       Icon(
-                        isFavorite ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
-                        color: isFavorite ? CupertinoColors.systemRed : CupertinoColors.systemGrey,
+                        CupertinoIcons.checkmark_seal_fill,
+                        color: AppTheme.primaryColor,
                         size: 16,
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4),
                       Text(
-                        'Favorite',
+                        'Planned',
                         style: TextStyle(
                           fontFamily: 'Montserrat',
                           fontSize: 10,
-                          color: isFavorite ? CupertinoColors.systemRed : CupertinoColors.systemGrey,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryColor,
                         ),
                       ),
                     ],
-                  ),
-                ),
+                  )
+                else
+                  const SizedBox(),
                 Row(
                   children: const [
                     Text(

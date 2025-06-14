@@ -4,11 +4,10 @@ import 'package:cookmate2/models/meal_plan.dart';
 import 'package:cookmate2/services/meal_plan_service.dart';
 import 'package:cookmate2/widgets/planned_meal_card.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Divider;
+import 'package:flutter/material.dart';
 
 class DayMealPlanRow extends StatefulWidget {
   final Day day;
-  // Callback baru untuk memberitahu parent saat ada kartu yang di-drop
   final Function(MealPlan, String) onCardDropped;
   final VoidCallback onPlanUpdated;
 
@@ -53,9 +52,7 @@ class _DayMealPlanRowState extends State<DayMealPlanRow> {
       builder: (context, candidateData, rejectedData) {
         final isTargeted = candidateData.isNotEmpty;
         return Container(
-          color: isTargeted
-              ? AppTheme.primaryColor.withOpacity(0.1)
-              : null,
+          color: isTargeted ? AppTheme.primaryColor.withOpacity(0.1) : null,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -73,7 +70,9 @@ class _DayMealPlanRowState extends State<DayMealPlanRow> {
                     }
                     if (!snapshot.hasData || snapshot.data!.isEmpty) {
                       return const Center(
-                        child: Text('Drag Here to Update your day yuhuu!!', style: TextStyle(color: CupertinoColors.systemGrey)),
+                        child: Text('Drag Here to Update your day yuhuu!!',
+                            style:
+                                TextStyle(color: CupertinoColors.systemGrey)),
                       );
                     }
                     final mealPlans = snapshot.data!;
@@ -83,16 +82,21 @@ class _DayMealPlanRowState extends State<DayMealPlanRow> {
                       itemCount: mealPlans.length,
                       itemBuilder: (context, index) {
                         final plan = mealPlans[index];
-                        return Draggable<MealPlan>(
-                          data: plan, 
-                          feedback: Opacity( 
-                            opacity: 0.8,
-                            child: SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.75,
-                              child: PlannedMealCard(mealPlan: plan, onDelete: () {}),
+                        return LongPressDraggable<MealPlan>(
+                          data: plan,
+                          feedback: Material(
+                            color: Colors.transparent,
+                            child: Opacity(
+                              opacity: 0.8,
+                              child: SizedBox(
+                                width:
+                                    MediaQuery.of(context).size.width * 0.75,
+                                child: PlannedMealCard(
+                                    mealPlan: plan, onDelete: () {}),
+                              ),
                             ),
                           ),
-                          childWhenDragging: Container( 
+                          childWhenDragging: Container(
                             width: MediaQuery.of(context).size.width * 0.75,
                             margin: const EdgeInsets.only(right: 12),
                             decoration: BoxDecoration(
@@ -100,7 +104,7 @@ class _DayMealPlanRowState extends State<DayMealPlanRow> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: Container( 
+                          child: Container(
                             width: MediaQuery.of(context).size.width * 0.75,
                             margin: const EdgeInsets.only(right: 12),
                             child: PlannedMealCard(
