@@ -208,7 +208,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 16),
 
-                    // Remember me and forgot password
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -247,7 +246,6 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           onPressed: () {
-                            // TODO: Navigate to forgot password screen
                           },
                         ),
                       ],
@@ -255,7 +253,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 32),
 
-                    // Login button
                     SizedBox(
                       width: double.infinity,
                       child: CupertinoButton(

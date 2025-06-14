@@ -51,7 +51,6 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
   }
 
   void _onSwipe() {
-    // Memulai animasi swipe
     _controller.forward();
   }
 
@@ -95,10 +94,10 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 250, // Menyesuaikan tinggi untuk desain baru yang lebih ringkas
+          height: 250, 
           child: GestureDetector(
             onHorizontalDragEnd: (details) {
-              // Jika swipe ke kiri (velocity negatif) atau kanan (velocity positif) cukup kencang
+            
               if (details.primaryVelocity != null && details.primaryVelocity!.abs() > 200) {
                  _onSwipe();
               }
@@ -106,7 +105,7 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
             child: Stack(
               alignment: Alignment.center,
               children: List.generate(
-                widget.recipes.length.clamp(0, 3), // Tampilkan maks 3 kartu
+                widget.recipes.length.clamp(0, 3), 
                 (index) {
                   final itemIndex = (_currentIndex + index) % widget.recipes.length;
                   final recipe = widget.recipes[itemIndex];

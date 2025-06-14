@@ -50,7 +50,6 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   void _register() async {
-    // Validasi input lokal
     if (_nameController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _passwordController.text.isEmpty ||
@@ -73,7 +72,6 @@ class _RegisterPageState extends State<RegisterPage> {
       _isLoading = true;
     });
 
-    // Panggil UserService untuk registrasi
     final userService = UserService();
     final (record, error) = await userService.registerUser(
       email: _emailController.text.trim(),
@@ -133,7 +131,6 @@ class _RegisterPageState extends State<RegisterPage> {
               children: [
                 const SizedBox(height: 20),
 
-                // Profile image picker
                 Center(
                   child: Column(
                     children: [
@@ -182,7 +179,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
                 const SizedBox(height: 32),
 
-                // Form registrasi
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

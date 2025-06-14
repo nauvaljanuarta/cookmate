@@ -176,12 +176,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        middle: const Text('Profil'),
+        middle: const Text('Profile'),
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
           onPressed: isLoading ? null : _toggleEdit,
           child: Text(
-            isEditing ? 'Simpan' : 'Edit',
+            isEditing ? 'Save' : 'Edit',
             style: TextStyle(
               color: AppTheme.primaryColor,
             ),

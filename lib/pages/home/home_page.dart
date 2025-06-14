@@ -2,6 +2,7 @@ import 'package:cookmate2/config/pocketbase_client.dart';
 import 'package:cookmate2/config/theme.dart';
 import 'package:cookmate2/models/recipe.dart';
 import 'package:cookmate2/models/user.dart' as model_user;
+import 'package:cookmate2/pages/profile/meal_plan_page.dart';
 import 'package:cookmate2/pages/profile/profile_page.dart';
 import 'package:cookmate2/pages/recipe/add_recipe_page.dart';
 import 'package:cookmate2/pages/recipe/detail_recipe_page.dart';
@@ -101,7 +102,7 @@ class _HomePageState extends State<HomePage> {
               case 2:
                 return const AddRecipePage();
               case 3:
-                return const Center(child: Text('Meals Plan'));
+                return const MealPlanPage();
               case 4:
                 return const ProfilePage();
               default:
@@ -192,7 +193,7 @@ class _HomePageState extends State<HomePage> {
                     CupertinoButton(
                       padding: EdgeInsets.zero,
                       child: const Text('See All', style: TextStyle(fontFamily: 'Montserrat', color: AppTheme.primaryColor)),
-                      // PERUBAHAN: Navigasi ke SearchPage
+                     
                       onPressed: () {
                         Navigator.of(context).push(
                           CupertinoPageRoute(builder: (context) => const SearchPage())
@@ -214,7 +215,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// Widget baru untuk membangun List horizontal dari resep unggulan
+  
   Widget _buildFeaturedRecipesHorizontalList() {
     return FutureBuilder<List<Recipe>>(
       future: _allRecipesFuture,
@@ -233,7 +234,7 @@ class _HomePageState extends State<HomePage> {
         
         return SliverToBoxAdapter(
           child: SizedBox(
-            height: AppTheme.cardHeight + AppTheme.spaceForShadow, // Sesuaikan dengan tinggi RecipeCard
+            height: AppTheme.cardHeight + AppTheme.spaceForShadow, 
             child: ListView.builder(
               clipBehavior: Clip.none,
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
@@ -241,7 +242,7 @@ class _HomePageState extends State<HomePage> {
               itemCount: recipes.length,
               itemBuilder: (context, index) {
                 final recipe = recipes[index];
-                // Memberi lebar pada setiap kartu dan jarak di antara mereka
+               
                 return Container(
                   width: MediaQuery.of(context).size.width * AppTheme.cardWidthRatio, 
                   margin: const EdgeInsets.only(right: 16.0),

@@ -32,4 +32,6 @@ class MealIngredient {
 
     return '$quantityString $unit $name'.trim().replaceAll(RegExp(r'\s+'), ' ');
   }
+
+  
 }
