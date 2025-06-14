@@ -1,7 +1,7 @@
 import 'package:cookmate2/models/day.dart';
 import 'package:cookmate2/models/meal_plan.dart';
 import 'package:cookmate2/services/meal_plan_service.dart';
-import 'package:cookmate2/widgets/planned_meal_card.dart';
+import 'package:cookmate2/widgets/day_meal_plan_row.dart';
 import 'package:flutter/cupertino.dart';
 
 class MealPlanPage extends StatefulWidget {
@@ -13,58 +13,30 @@ class MealPlanPage extends StatefulWidget {
 
 class _MealPlanPageState extends State<MealPlanPage> {
   final MealPlanService _mealPlanService = MealPlanService();
-
-  List<Day> _days = [];
-  Map<int, String> _daySegments = {};
-  int _selectedSegment = 0;
-
-  Future<List<MealPlan>>? _mealPlansFuture;
+  late Future<List<Day>> _daysFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
+    _daysFuture = _mealPlanService.getDays();
   }
 
- 
-  Future<void> _loadInitialData() async {
-    final fetchedDays = await _mealPlanService.getDays();
-    if (fetchedDays.isNotEmpty && mounted) {
-      final initialDayId = fetchedDays.first.id;
-      final initialPlansFuture = _mealPlanService.getMealPlansForDay(initialDayId);
-      
-      setState(() {
-        _days = fetchedDays;
-        _daySegments = {for (var i = 0; i < _days.length; i++) i: _days[i].name};
-        _mealPlansFuture = initialPlansFuture;
-      });
-    }
+  Future<void> _refreshPage() async {
+    setState(() {
+      _daysFuture = _mealPlanService.getDays();
+    });
   }
 
- 
-  void _onSegmentChanged(int? newValue) {
-    if (newValue != null && mounted) {
-      setState(() {
-        _selectedSegment = newValue;
-        final selectedDayId = _days[_selectedSegment].id;
-        _mealPlansFuture = _mealPlanService.getMealPlansForDay(selectedDayId);
-      });
+  Future<void> _handleCardDrop(MealPlan plan, String newDayId) async {
+    if (plan.dayId == newDayId) {
+      return;
     }
-  }
-  
-  Future<void> _refreshPlans() async {
-    if (_days.isNotEmpty && mounted) {
-      final selectedDayId = _days[_selectedSegment].id;
-      setState(() {
-        _mealPlansFuture = _mealPlanService.getMealPlansForDay(selectedDayId);
-      });
-    }
-  }
-
-  Future<void> _handleDeletePlan(String mealPlanId) async {
-    await _mealPlanService.deleteMealPlan(mealPlanId);
-    if (mounted) {
-      _refreshPlans();
+    
+    try {
+      await _mealPlanService.updateMealPlanDay(plan.id, newDayId);
+      _refreshPage();
+    } catch (e) {
+      print("Failed to move plan: $e");
     }
   }
 
@@ -76,70 +48,43 @@ class _MealPlanPageState extends State<MealPlanPage> {
           const CupertinoSliverNavigationBar(
             largeTitle: Text('Meal Planner'),
           ),
-          CupertinoSliverRefreshControl(onRefresh: _refreshPlans),
+          CupertinoSliverRefreshControl(onRefresh: _refreshPage),
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: _daySegments.isEmpty
-                  ? const Center(child: CupertinoActivityIndicator())
-                  : CupertinoSegmentedControl<int>(
-                      children: _daySegments.map(
-                        (key, value) => MapEntry(
-                          key,
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Text(value),
-                          ),
-                        ),
-                      ),
-                      groupValue: _selectedSegment,
-                      onValueChanged: _onSegmentChanged,
-                    ),
+            child: FutureBuilder<List<Day>>(
+              future: _daysFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    heightFactor: 10,
+                    child: CupertinoActivityIndicator(),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('Days Not Fund.'));
+                }
+                final days = snapshot.data!;
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: days.length,
+                  itemBuilder: (context, index) {
+                    final day = days[index];
+                    return DayMealPlanRow(
+                      key: ValueKey(day.id),
+                      day: day,
+                      onCardDropped: _handleCardDrop, 
+                      onPlanUpdated: _refreshPage,
+                    );
+                  },
+                );
+              },
             ),
           ),
-          _buildMealPlanList(),
         ],
       ),
-    );
-  }
-
-  Widget _buildMealPlanList() {
-    if (_mealPlansFuture == null) {
-      return const SliverFillRemaining(
-        child: Center(child: CupertinoActivityIndicator()),
-      );
-    }
-    return FutureBuilder<List<MealPlan>>(
-      future: _mealPlansFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SliverFillRemaining(
-              child: Center(child: CupertinoActivityIndicator()));
-        }
-        if (snapshot.hasError) {
-          return SliverFillRemaining(child: Center(child: Text('Error: ${snapshot.error}')));
-        }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const SliverFillRemaining(
-            child: Center(
-              child: Text('No meals planned for this day.'),
-            ),
-          );
-        }
-        final mealPlans = snapshot.data!;
-        return SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final plan = mealPlans[index];
-              return PlannedMealCard(
-                mealPlan: plan,
-                onDelete: () => _handleDeletePlan(plan.id),
-              );
-            },
-            childCount: mealPlans.length,
-          ),
-        );
-      },
     );
   }
 }

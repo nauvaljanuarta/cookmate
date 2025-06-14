@@ -7,15 +7,18 @@ import 'package:pocketbase/pocketbase.dart';
 class MealPlanService {
   final PocketBase _pb = PocketBaseClient.instance;
 
-  Future<List<Day>> getDays() async {
-    try {
-      final records = await _pb.collection('days').getFullList(sort: 'order');
-      return records.map((record) => Day.fromRecord(record)).toList();
-    } catch (e) {
-      print('Error fetching days: $e');
-      return [];
-    }
+
+Future<List<Day>> getDays() async {
+  try {
+    final records = await _pb.collection('days').getFullList();
+
+    final days = records.map((record) => Day.fromRecord(record)).toList();  
+    return days;
+  } catch (e) {
+    print('Error fetching days: $e');
+    return [];
   }
+}
 
   Future<List<MealPlan>> getMealPlansForDay(String dayId) async {
     if (!_pb.authStore.isValid) return [];
@@ -83,6 +86,19 @@ class MealPlanService {
       if (e.statusCode == 404) {
         return false;
       }
+      rethrow;
+    }
+  }
+
+  Future<void> updateMealPlanDay(String mealPlanId, String newDayId) async {
+    final body = <String, dynamic>{
+      "day_id": newDayId,
+    };
+
+    try {
+      await _pb.collection('meal_plans').update(mealPlanId, body: body);
+    } catch (e) {
+      print('Error updating meal plan day for $mealPlanId: $e');
       rethrow;
     }
   }
