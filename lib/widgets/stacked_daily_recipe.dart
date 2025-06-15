@@ -19,8 +19,7 @@ class StackedRecipeCards extends StatefulWidget {
   State<StackedRecipeCards> createState() => _StackedRecipeCardsState();
 }
 
-class _StackedRecipeCardsState extends State<StackedRecipeCards>
-    with SingleTickerProviderStateMixin {
+class _StackedRecipeCardsState extends State<StackedRecipeCards> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   int _currentIndex = 0;
 
@@ -94,18 +93,17 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 250, 
+          height: 250,
           child: GestureDetector(
             onHorizontalDragEnd: (details) {
-            
               if (details.primaryVelocity != null && details.primaryVelocity!.abs() > 200) {
-                 _onSwipe();
+                _onSwipe();
               }
             },
             child: Stack(
               alignment: Alignment.center,
               children: List.generate(
-                widget.recipes.length.clamp(0, 3), 
+                widget.recipes.length.clamp(0, 3),
                 (index) {
                   final itemIndex = (_currentIndex + index) % widget.recipes.length;
                   final recipe = widget.recipes[itemIndex];
@@ -135,7 +133,7 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
           image: DecorationImage(
             image: NetworkImage(recipe.imageUrl),
             fit: BoxFit.cover,
-            onError: (exception, stackTrace) {}, 
+            onError: (exception, stackTrace) {},
           ),
           boxShadow: [
             BoxShadow(
@@ -172,16 +170,18 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
       child: card,
     );
   }
-  
+
   Widget _buildCardOverlay(Recipe recipe, int stackIndex) {
     return GestureDetector(
-      onTap: stackIndex == 0 ? () {
-        Navigator.of(context).push(
-          CupertinoPageRoute(
-            builder: (context) => RecipeDetail(recipe: recipe),
-          ),
-        );
-      } : null, 
+      onTap: stackIndex == 0
+          ? () {
+              Navigator.of(context).push(
+                CupertinoPageRoute(
+                  builder: (context) => RecipeDetail(recipe: recipe),
+                ),
+              );
+            }
+          : null,
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -192,7 +192,11 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
               Colors.black.withOpacity(0.1),
               Colors.black.withOpacity(0.6),
             ],
-            stops: const [0.5, 0.7, 1.0],
+            stops: const [
+              0.5,
+              0.7,
+              1.0
+            ],
           ),
         ),
         child: Stack(
@@ -200,7 +204,7 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
             Positioned(
               bottom: 16,
               left: 16,
-              right: 80, 
+              right: 80,
               child: Text(
                 recipe.name,
                 style: const TextStyle(
@@ -208,7 +212,9 @@ class _StackedRecipeCardsState extends State<StackedRecipeCards>
                   color: Colors.white,
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  shadows: [Shadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2))],
+                  shadows: [
+                    Shadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2))
+                  ],
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

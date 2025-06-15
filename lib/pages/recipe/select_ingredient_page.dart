@@ -5,8 +5,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketbase/pocketbase.dart';
 
-/// Halaman yang berfungsi untuk mencari, memilih, atau membuat bahan baru.
-/// Mengembalikan RecordModel dari bahan yang dipilih atau dibuat.
 class SelectIngredientPage extends StatefulWidget {
   const SelectIngredientPage({super.key});
 
@@ -53,7 +51,7 @@ class _SelectIngredientPageState extends State<SelectIngredientPage> {
   Future<void> _createNewIngredient() async {
     final newIngredientName = _searchController.text.trim();
     if (newIngredientName.isEmpty) return;
-    
+
     try {
       final newRecord = await _recipeService.addIngredient(newIngredientName);
       if (mounted) {
@@ -61,10 +59,8 @@ class _SelectIngredientPageState extends State<SelectIngredientPage> {
         Navigator.pop(context, newRecord);
       }
     } catch (e) {
-      if(mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create ingredient: $e'), backgroundColor: Colors.red)
-        );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to create ingredient: $e'), backgroundColor: Colors.red));
       }
     }
   }
@@ -99,7 +95,7 @@ class _SelectIngredientPageState extends State<SelectIngredientPage> {
                   // Tombol untuk membuat bahan baru jika tidak ada hasil
                   if (index == _searchResults.length) {
                     if (!_isSearching && _searchController.text.isNotEmpty && _searchResults.isEmpty) {
-                       return CupertinoListTile(
+                      return CupertinoListTile(
                         title: Text('Create new: "${_searchController.text}"'),
                         leading: const Icon(CupertinoIcons.add_circled_solid),
                         onTap: _createNewIngredient,

@@ -7,7 +7,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cookmate2/models/user.dart';
 
 class UserService {
-  Future<(RecordModel?, String?)> registerUser({
+  Future<
+      (
+        RecordModel?,
+        String?
+      )> registerUser({
     required String email,
     required String password,
     required String passwordConfirm,
@@ -16,13 +20,22 @@ class UserService {
     File? profileImage,
   }) async {
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
-      return (null, 'Email tidak valid');
+      return (
+        null,
+        'Email tidak valid'
+      );
     }
     if (password != passwordConfirm) {
-      return (null, 'Password dan konfirmasi tidak cocok');
+      return (
+        null,
+        'Password dan konfirmasi tidak cocok'
+      );
     }
     if (password.length < 8) {
-      return (null, 'Password harus minimal 8 karakter');
+      return (
+        null,
+        'Password harus minimal 8 karakter'
+      );
     }
 
     final body = <String, dynamic>{
@@ -55,25 +68,32 @@ class UserService {
       } catch (e) {
         print('Gagal mengirim verifikasi email: $e');
       }
-      return (record, null);
+      return (
+        record,
+        null
+      );
     } catch (e) {
       print('Error saat registrasi: $e');
       String errorMessage;
       if (e is ClientException) {
         final response = e.response;
-        errorMessage = response['message'] ??
-            response['data']?['email']?['message'] ??
-            response['data']?['username']?['message'] ??
-            'Gagal register: ${e.toString()}';
+        errorMessage = response['message'] ?? response['data']?['email']?['message'] ?? response['data']?['username']?['message'] ?? 'Gagal register: ${e.toString()}';
         print('Detail error ClientException: $response');
       } else {
         errorMessage = 'Gagal register: ${e.toString()}';
       }
-      return (null, errorMessage);
+      return (
+        null,
+        errorMessage
+      );
     }
   }
 
-  Future<(bool, String?)> loginUser({
+  Future<
+      (
+        bool,
+        String?
+      )> loginUser({
     required String email,
     required String password,
   }) async {
@@ -83,7 +103,10 @@ class UserService {
       PocketBaseClient.instance.authStore.save(authData.token, authData.record);
       await _saveAuthToken(authData.token, authData.record);
 
-      return (authData.token.isNotEmpty, null);
+      return (
+        authData.token.isNotEmpty,
+        null
+      );
     } catch (e) {
       print('Error saat login: $e');
       String errorMessage;
@@ -92,7 +115,10 @@ class UserService {
       } else {
         errorMessage = 'Gagal login: ${e.toString()}';
       }
-      return (false, errorMessage);
+      return (
+        false,
+        errorMessage
+      );
     }
   }
 
@@ -120,17 +146,27 @@ class UserService {
     _clearAuthToken();
   }
 
-  Future<(bool, String?)> updateUser(Map<String, dynamic> data) async {
+  Future<
+      (
+        bool,
+        String?
+      )> updateUser(Map<String, dynamic> data) async {
     final user = getCurrentUser();
     if (user == null) {
       print('Update gagal: Tidak ada pengguna yang login');
-      return (false, 'Tidak ada pengguna yang login');
+      return (
+        false,
+        'Tidak ada pengguna yang login'
+      );
     }
     try {
       print('Mengirim request update user: $data');
       await PocketBaseClient.instance.collection('users').update(user.id, body: data);
       print('Update user berhasil');
-      return (true, null);
+      return (
+        true,
+        null
+      );
     } catch (e) {
       print('Error saat update user: $e');
       String errorMessage;
@@ -139,7 +175,10 @@ class UserService {
       } else {
         errorMessage = 'Gagal update user: ${e.toString()}';
       }
-      return (false, errorMessage);
+      return (
+        false,
+        errorMessage
+      );
     }
   }
 

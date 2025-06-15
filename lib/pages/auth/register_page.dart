@@ -50,10 +50,7 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   void _register() async {
-    if (_nameController.text.isEmpty ||
-        _emailController.text.isEmpty ||
-        _passwordController.text.isEmpty ||
-        _confirmPasswordController.text.isEmpty) {
+    if (_nameController.text.isEmpty || _emailController.text.isEmpty || _passwordController.text.isEmpty || _confirmPasswordController.text.isEmpty) {
       _showAlert('Please fill in all fields');
       return;
     }
@@ -73,7 +70,10 @@ class _RegisterPageState extends State<RegisterPage> {
     });
 
     final userService = UserService();
-    final (record, error) = await userService.registerUser(
+    final (
+      record,
+      error
+    ) = await userService.registerUser(
       email: _emailController.text.trim(),
       password: _passwordController.text,
       passwordConfirm: _confirmPasswordController.text,
@@ -86,7 +86,6 @@ class _RegisterPageState extends State<RegisterPage> {
       _isLoading = false;
     });
 
-    
     if (record != null) {
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -130,7 +129,6 @@ class _RegisterPageState extends State<RegisterPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 20),
-
                 Center(
                   child: Column(
                     children: [
@@ -176,9 +174,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 32),
-
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -206,9 +202,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     const Text(
                       'Email',
                       style: TextStyle(
@@ -234,9 +228,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     const Text(
                       'Bio',
                       style: TextStyle(
@@ -262,9 +254,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     const Text(
                       'Password',
                       style: TextStyle(
@@ -298,17 +288,13 @@ class _RegisterPageState extends State<RegisterPage> {
                             });
                           },
                           child: Icon(
-                            _obscurePassword
-                                ? CupertinoIcons.eye
-                                : CupertinoIcons.eye_slash,
+                            _obscurePassword ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
                             color: CupertinoColors.systemGrey,
                           ),
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     const Text(
                       'Confirm Password',
                       style: TextStyle(
@@ -342,17 +328,13 @@ class _RegisterPageState extends State<RegisterPage> {
                             });
                           },
                           child: Icon(
-                            _obscureConfirmPassword
-                                ? CupertinoIcons.eye
-                                : CupertinoIcons.eye_slash,
+                            _obscureConfirmPassword ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
                             color: CupertinoColors.systemGrey,
                           ),
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
                     GestureDetector(
                       onTap: () {
                         setState(() {
@@ -363,12 +345,8 @@ class _RegisterPageState extends State<RegisterPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(
-                            _agreeToTerms
-                                ? CupertinoIcons.checkmark_square_fill
-                                : CupertinoIcons.square,
-                            color: _agreeToTerms
-                                ? AppTheme.primaryColor
-                                : CupertinoColors.systemGrey,
+                            _agreeToTerms ? CupertinoIcons.checkmark_square_fill : CupertinoIcons.square,
+                            color: _agreeToTerms ? AppTheme.primaryColor : CupertinoColors.systemGrey,
                             size: 20,
                           ),
                           const SizedBox(width: 12),
@@ -385,9 +363,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 32),
-
                     SizedBox(
                       width: double.infinity,
                       child: CupertinoButton(
@@ -410,9 +386,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

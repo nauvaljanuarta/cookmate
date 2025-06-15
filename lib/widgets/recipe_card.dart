@@ -18,7 +18,7 @@ class RecipeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Bagian ini sudah benar dari kode Anda sebelumnya, 
+    // Bagian ini sudah benar dari kode Anda sebelumnya,
     // dengan shadow dan ClipRRect
     return GestureDetector(
       onTap: onTap,
@@ -49,7 +49,7 @@ class RecipeCard extends StatelessWidget {
                     children: [
                       _buildRecipeImage(),
                       const SizedBox(height: 30),
-                      _buildRecipeTextDetails(context), 
+                      _buildRecipeTextDetails(context),
                     ],
                   ),
                   _buildAuthorAvatar(),
@@ -98,7 +98,7 @@ class RecipeCard extends StatelessWidget {
     );
   }
 
-   Widget _buildRecipeTextDetails(BuildContext context) {
+  Widget _buildRecipeTextDetails(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -129,7 +129,6 @@ class RecipeCard extends StatelessWidget {
             textAlign: TextAlign.left,
           ),
           const SizedBox(height: 8),
-
           if (recipe.categories.isNotEmpty)
             Text(
               recipe.categories.join(' • '),
@@ -142,7 +141,6 @@ class RecipeCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
             ),
-
           const SizedBox(height: 1),
           const Divider(color: CupertinoColors.systemGrey5),
           Padding(

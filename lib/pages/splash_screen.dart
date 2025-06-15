@@ -29,12 +29,10 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (mounted) {
       if (PocketBaseClient.instance.authStore.isValid) {
-        print('Sesi ditemukan, navigasi ke HomePage');
         Navigator.of(context).pushReplacement(
           CupertinoPageRoute(builder: (context) => const HomePage()),
         );
       } else {
-        print('Tidak ada sesi, navigasi ke LoginPage');
         Navigator.of(context).pushReplacement(
           CupertinoPageRoute(builder: (context) => const LoginPage()),
         );
@@ -72,7 +70,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 color: CupertinoColors.white,
                 fontSize: 40,
                 fontWeight: FontWeight.bold,
-                decoration: TextDecoration.none, // Menghilangkan garis bawah default
+                decoration: TextDecoration.none, 
               ),
             ),
             const SizedBox(height: 8),
@@ -82,7 +80,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 fontFamily: 'Montserrat',
                 color: CupertinoColors.white,
                 fontSize: 16,
-                decoration: TextDecoration.none, // Menghilangkan garis bawah default
+                decoration: TextDecoration.none, 
               ),
             ),
           ],

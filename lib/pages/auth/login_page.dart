@@ -105,9 +105,9 @@ class _LoginPageState extends State<LoginPage> {
                         alignment: Alignment.center,
                         child: SvgPicture.asset(
                           'assets/images/splash.svg',
-                          width: 70, 
+                          width: 70,
                           height: 70,
-                          color: CupertinoColors.systemOrange, 
+                          color: CupertinoColors.systemOrange,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -245,8 +245,7 @@ class _LoginPageState extends State<LoginPage> {
                               color: AppTheme.primaryColor,
                             ),
                           ),
-                          onPressed: () {
-                          },
+                          onPressed: () {},
                         ),
                       ],
                     ),
@@ -305,33 +304,24 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 24),
-
-                        
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             _buildSocialButton(
                               icon: CupertinoIcons.globe,
                               label: 'Google',
-                              onTap: () {
-                                
-                              },
+                              onTap: () {},
                             ),
                             _buildSocialButton(
                               icon: CupertinoIcons.device_phone_portrait,
                               label: 'Apple',
-                              onTap: () {
-                                
-                              },
+                              onTap: () {},
                             ),
                             _buildSocialButton(
                               icon: CupertinoIcons.person_crop_circle,
                               label: 'Facebook',
-                              onTap: () {
-                                
-                              },
+                              onTap: () {},
                             ),
                           ],
                         ),

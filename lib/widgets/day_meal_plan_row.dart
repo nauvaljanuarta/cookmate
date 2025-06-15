@@ -70,9 +70,7 @@ class _DayMealPlanRowState extends State<DayMealPlanRow> {
                     }
                     if (!snapshot.hasData || snapshot.data!.isEmpty) {
                       return const Center(
-                        child: Text('Drag Here to Update your day yuhuu!!',
-                            style:
-                                TextStyle(color: CupertinoColors.systemGrey)),
+                        child: Text('Drag Here to Update your day yuhuu!!', style: TextStyle(color: CupertinoColors.systemGrey)),
                       );
                     }
                     final mealPlans = snapshot.data!;
@@ -89,10 +87,8 @@ class _DayMealPlanRowState extends State<DayMealPlanRow> {
                             child: Opacity(
                               opacity: 0.8,
                               child: SizedBox(
-                                width:
-                                    MediaQuery.of(context).size.width * 0.75,
-                                child: PlannedMealCard(
-                                    mealPlan: plan, onDelete: () {}),
+                                width: MediaQuery.of(context).size.width * 0.75,
+                                child: PlannedMealCard(mealPlan: plan, onDelete: () {}),
                               ),
                             ),
                           ),

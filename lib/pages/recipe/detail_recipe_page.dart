@@ -82,16 +82,11 @@ class _RecipeDetailState extends State<RecipeDetail> {
     if (selectedDayId == null) return;
 
     if (mounted) {
-      showCupertinoDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) =>
-              const Center(child: CupertinoActivityIndicator()));
+      showCupertinoDialog(context: context, barrierDismissible: false, builder: (context) => const Center(child: CupertinoActivityIndicator()));
     }
 
     try {
-      await _mealPlanService.addMealPlan(
-          mealId: widget.recipe.id, dayId: selectedDayId);
+      await _mealPlanService.addMealPlan(mealId: widget.recipe.id, dayId: selectedDayId);
 
       if (mounted) {
         Navigator.of(context).pop();
@@ -103,13 +98,9 @@ class _RecipeDetailState extends State<RecipeDetail> {
             context: context,
             builder: (context) => CupertinoAlertDialog(
                   title: const Text('Success'),
-                  content: Text(
-                      '${widget.recipe.name} has been added to your meal plan.'),
+                  content: Text('${widget.recipe.name} has been added to your meal plan.'),
                   actions: [
-                    CupertinoDialogAction(
-                        isDefaultAction: true,
-                        child: const Text('OK'),
-                        onPressed: () => Navigator.of(context).pop())
+                    CupertinoDialogAction(isDefaultAction: true, child: const Text('OK'), onPressed: () => Navigator.of(context).pop())
                   ],
                 ));
       }
@@ -122,10 +113,7 @@ class _RecipeDetailState extends State<RecipeDetail> {
                   title: const Text('Failed'),
                   content: Text('An error occurred: $e'),
                   actions: [
-                    CupertinoDialogAction(
-                        isDefaultAction: true,
-                        child: const Text('OK'),
-                        onPressed: () => Navigator.of(context).pop())
+                    CupertinoDialogAction(isDefaultAction: true, child: const Text('OK'), onPressed: () => Navigator.of(context).pop())
                   ],
                 ));
       }
@@ -137,9 +125,7 @@ class _RecipeDetailState extends State<RecipeDetail> {
     return CupertinoPageScaffold(
       child: CustomScrollView(
         slivers: [
-          CupertinoSliverNavigationBar(
-              largeTitle: Text(widget.recipe.name),
-              trailing: _buildNavBarActions()),
+          CupertinoSliverNavigationBar(largeTitle: Text(widget.recipe.name), trailing: _buildNavBarActions()),
           SliverToBoxAdapter(
               child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,26 +137,17 @@ class _RecipeDetailState extends State<RecipeDetail> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildAuthorInfo(),
+                      const SizedBox(height: 16),
+                      Text(
+                        widget.recipe.description,
+                        style: AppTheme.bodyStyle.copyWith(fontSize: 16, height: 1.5),
+                      ),
                       const SizedBox(height: 20),
-                      Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _buildInfoCard(
-                                context,
-                                CupertinoIcons.timer,
-                                '${widget.recipe.times} min',
-                                'Total Time'),
-                            _buildInfoCard(
-                                context,
-                                CupertinoIcons.chart_bar_alt_fill,
-                                widget.recipe.difficulty,
-                                'Difficulty'),
-                            _buildInfoCard(
-                                context,
-                                CupertinoIcons.person_2,
-                                '${widget.recipe.servings}',
-                                'Servings'),
-                          ]),
+                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                        _buildInfoCard(context, CupertinoIcons.timer, '${widget.recipe.times} min', 'Total Time'),
+                        _buildInfoCard(context, CupertinoIcons.chart_bar_alt_fill, widget.recipe.difficulty, 'Difficulty'),
+                        _buildInfoCard(context, CupertinoIcons.person_2, '${widget.recipe.servings}', 'Servings'),
+                      ]),
                       const SizedBox(height: 20),
                       _buildIngredientsSection(),
                       const SizedBox(height: 20),
@@ -180,27 +157,14 @@ class _RecipeDetailState extends State<RecipeDetail> {
                           width: double.infinity,
                           child: CupertinoButton.filled(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            onPressed: _isCheckingStatus || _isAlreadyPlanned
-                                ? null
-                                : _handleAddToMealPlan,
+                            onPressed: _isCheckingStatus || _isAlreadyPlanned ? null : _handleAddToMealPlan,
                             child: _isCheckingStatus
-                                ? const CupertinoActivityIndicator(
-                                    color: CupertinoColors.white)
-                                : Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                        Icon(
-                                            _isAlreadyPlanned
-                                                ? CupertinoIcons
-                                                    .checkmark_alt_circle_fill
-                                                : CupertinoIcons
-                                                    .calendar_badge_plus,
-                                            size: 20),
-                                        const SizedBox(width: 8),
-                                        Text(_isAlreadyPlanned
-                                            ? 'Added to Meal Plan'
-                                            : 'Add to Meal Plan'),
-                                      ]),
+                                ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                                : Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                                    Icon(_isAlreadyPlanned ? CupertinoIcons.checkmark_alt_circle_fill : CupertinoIcons.calendar_badge_plus, size: 20),
+                                    const SizedBox(width: 8),
+                                    Text(_isAlreadyPlanned ? 'Added to Meal Plan' : 'Add to Meal Plan'),
+                                  ]),
                           )),
                     ],
                   )),
@@ -300,14 +264,10 @@ class _RecipeDetailState extends State<RecipeDetail> {
       child: FutureBuilder<List<RecordModel>>(
         future: _ingredientsFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting)
-            return const Center(child: CupertinoActivityIndicator());
-          if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty)
-            return const Center(child: Text('No ingredients found.'));
+          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CupertinoActivityIndicator());
+          if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) return const Center(child: Text('No ingredients found.'));
 
-          final ingredients = snapshot.data!
-              .map((record) => MealIngredient.fromRecord(record))
-              .toList();
+          final ingredients = snapshot.data!.map((record) => MealIngredient.fromRecord(record)).toList();
 
           return Padding(
             padding: const EdgeInsets.only(top: 4.0),
@@ -319,18 +279,10 @@ class _RecipeDetailState extends State<RecipeDetail> {
               itemBuilder: (context, index) {
                 final ingredient = ingredients[index];
                 return Row(children: [
-                  const Icon(CupertinoIcons.checkmark_alt_circle_fill,
-                      size: 20, color: AppTheme.primaryColor),
+                  const Icon(CupertinoIcons.checkmark_alt_circle_fill, size: 20, color: AppTheme.primaryColor),
                   const SizedBox(width: 12),
-                  Expanded(
-                      child: Text(ingredient.name,
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w500))),
-                  Text(
-                      '${ingredient.quantity.toStringAsFixed(0).replaceAll(RegExp(r'\\.0$'), '')} ${ingredient.unit}'
-                          .trim(),
-                      style: const TextStyle(
-                          fontSize: 16, color: CupertinoColors.systemGrey)),
+                  Expanded(child: Text(ingredient.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
+                  Text('${ingredient.quantity.toStringAsFixed(0).replaceAll(RegExp(r'\\.0$'), '')} ${ingredient.unit}'.trim(), style: const TextStyle(fontSize: 16, color: CupertinoColors.systemGrey)),
                 ]);
               },
             ),
@@ -373,8 +325,7 @@ class _RecipeDetailState extends State<RecipeDetail> {
                         height: 24,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border:
-                              Border.all(color: AppTheme.primaryColor, width: 2),
+                          border: Border.all(color: AppTheme.primaryColor, width: 2),
                         ),
                         child: Center(
                           child: Text(
@@ -405,28 +356,19 @@ class _RecipeDetailState extends State<RecipeDetail> {
     );
   }
 
-  Widget _buildInfoCard(
-      BuildContext context, IconData icon, String value, String label) {
+  Widget _buildInfoCard(BuildContext context, IconData icon, String value, String label) {
     return Expanded(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
-        decoration: BoxDecoration(
-            color: CupertinoColors.systemGrey6,
-            borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(color: CupertinoColors.systemGrey6, borderRadius: BorderRadius.circular(12)),
         child: Column(
           children: [
             Icon(icon, color: AppTheme.primaryColor, size: 24),
             const SizedBox(height: 8),
-            Text(value,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                textAlign: TextAlign.center),
+            Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), textAlign: TextAlign.center),
             const SizedBox(height: 2),
-            Text(label,
-                style: const TextStyle(
-                    color: CupertinoColors.systemGrey, fontSize: 12),
-                textAlign: TextAlign.center),
+            Text(label, style: const TextStyle(color: CupertinoColors.systemGrey, fontSize: 12), textAlign: TextAlign.center),
           ],
         ),
       ),

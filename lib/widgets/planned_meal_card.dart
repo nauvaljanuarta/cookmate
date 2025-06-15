@@ -1,7 +1,7 @@
 import 'package:cookmate2/config/theme.dart';
 import 'package:cookmate2/models/meal_ingredient.dart';
 import 'package:cookmate2/models/meal_plan.dart';
-import 'package:cookmate2/pages/recipe/detail_recipe_page.dart'; 
+import 'package:cookmate2/pages/recipe/detail_recipe_page.dart';
 import 'package:cookmate2/services/recipe_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Divider;
@@ -29,10 +29,7 @@ class _PlannedMealCardState extends State<PlannedMealCard> {
   void initState() {
     super.initState();
     if (widget.mealPlan.meal != null) {
-      _ingredientsFuture = _recipeService
-          .getIngredientsForRecipe(widget.mealPlan.meal!.id)
-          .then((records) =>
-              records.map((rec) => MealIngredient.fromRecord(rec)).toList());
+      _ingredientsFuture = _recipeService.getIngredientsForRecipe(widget.mealPlan.meal!.id).then((records) => records.map((rec) => MealIngredient.fromRecord(rec)).toList());
     }
   }
 
@@ -83,8 +80,7 @@ class _PlannedMealCardState extends State<PlannedMealCard> {
                       width: 70,
                       height: 70,
                       color: CupertinoColors.systemGrey5,
-                      child: const Icon(CupertinoIcons.photo,
-                          color: CupertinoColors.systemGrey),
+                      child: const Icon(CupertinoIcons.photo, color: CupertinoColors.systemGrey),
                     ),
                   ),
                 ),
@@ -93,14 +89,11 @@ class _PlannedMealCardState extends State<PlannedMealCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(recipe.name,
-                          style:
-                              AppTheme.subheadingStyle.copyWith(fontSize: 16)),
+                      Text(recipe.name, style: AppTheme.subheadingStyle.copyWith(fontSize: 16)),
                       const SizedBox(height: 2),
                       Text(
                         recipe.categories.join(' • '),
-                        style: AppTheme.captionStyle
-                            .copyWith(color: AppTheme.primaryColor),
+                        style: AppTheme.captionStyle.copyWith(color: AppTheme.primaryColor),
                       ),
                     ],
                   ),
@@ -142,14 +135,12 @@ class _PlannedMealCardState extends State<PlannedMealCard> {
                     padding: const EdgeInsets.symmetric(vertical: 4.0),
                     child: Row(
                       children: [
-                        const Icon(CupertinoIcons.circle_fill,
-                            size: 8, color: CupertinoColors.systemGrey2),
+                        const Icon(CupertinoIcons.circle_fill, size: 8, color: CupertinoColors.systemGrey2),
                         const SizedBox(width: 8),
                         Expanded(child: Text(ing.name)),
                         Text(
                           '${ing.quantity.toStringAsFixed(1).replaceAll(RegExp(r'\\.0$'), '')} ${ing.unit}',
-                          style:
-                              const TextStyle(color: CupertinoColors.systemGrey),
+                          style: const TextStyle(color: CupertinoColors.systemGrey),
                         ),
                       ],
                     ),

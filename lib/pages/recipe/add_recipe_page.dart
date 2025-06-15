@@ -37,21 +37,25 @@ class _AddRecipePageState extends State<AddRecipePage> {
   final _descriptionController = TextEditingController();
   final _timesController = TextEditingController(); // Mengganti _prepTimeController
   final _servingsController = TextEditingController(); // Menambahkan servings
-  
+
   // State
   String _selectedDifficulty = 'MD'; // Nilai default untuk dikirim ke DB
   List<RecordModel> _categories = [];
   final List<String> _selectedCategoryIds = [];
-  List<RecipeIngredientController> _ingredientControllers = [RecipeIngredientController()];
-  List<TextEditingController> _instructionControllers = [TextEditingController()];
+  List<RecipeIngredientController> _ingredientControllers = [
+    RecipeIngredientController()
+  ];
+  List<TextEditingController> _instructionControllers = [
+    TextEditingController()
+  ];
   File? _image;
   final _picker = ImagePicker();
 
   // Data mapping untuk Difficulty
   final Map<String, String> _difficultyOptions = {
     'EZ': 'Easy',
-    'MD': 'Medium',
-    'HD': 'Hard',
+    'Medium': 'Medium',
+    'Hard': 'Hard',
   };
 
   @override
@@ -66,8 +70,12 @@ class _AddRecipePageState extends State<AddRecipePage> {
     _descriptionController.dispose();
     _timesController.dispose();
     _servingsController.dispose();
-    for (var controller in _ingredientControllers) { controller.dispose(); }
-    for (var controller in _instructionControllers) { controller.dispose(); }
+    for (var controller in _ingredientControllers) {
+      controller.dispose();
+    }
+    for (var controller in _instructionControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -85,24 +93,29 @@ class _AddRecipePageState extends State<AddRecipePage> {
   Future<void> _submitRecipe() async {
     // Validasi input
     if (_nameController.text.isEmpty || _descriptionController.text.isEmpty || _timesController.text.isEmpty || _servingsController.text.isEmpty) {
-      _showErrorSnackbar('Please fill all recipe details.'); return;
+      _showErrorSnackbar('Please fill all recipe details.');
+      return;
     }
     if (_selectedCategoryIds.isEmpty) {
-      _showErrorSnackbar('Please select at least one category.'); return;
+      _showErrorSnackbar('Please select at least one category.');
+      return;
     }
     final ingredients = _ingredientControllers
         .where((c) => c.selectedIngredient != null && c.quantityController.text.isNotEmpty)
         .map((c) => IngredientInput(
-            ingredientId: c.selectedIngredient!.id,
-            quantity: c.quantityController.text,
-            unit: c.unitController.text,
-          )).toList();
+              ingredientId: c.selectedIngredient!.id,
+              quantity: c.quantityController.text,
+              unit: c.unitController.text,
+            ))
+        .toList();
     if (ingredients.isEmpty) {
-      _showErrorSnackbar('At least one valid ingredient with quantity is required.'); return;
+      _showErrorSnackbar('At least one valid ingredient with quantity is required.');
+      return;
     }
     final instructions = _instructionControllers.map((c) => c.text).where((t) => t.isNotEmpty).toList();
     if (instructions.isEmpty) {
-      _showErrorSnackbar('At least one instruction is required.'); return;
+      _showErrorSnackbar('At least one instruction is required.');
+      return;
     }
 
     setState(() => _isLoading = true);
@@ -123,16 +136,16 @@ class _AddRecipePageState extends State<AddRecipePage> {
         await _showSuccessAndReset();
       }
     } catch (e) {
-      if(mounted) {
+      if (mounted) {
         _showErrorSnackbar('Failed to add recipe: $e');
       }
     } finally {
-        if(mounted) {
-           setState(() => _isLoading = false);
-        }
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
-  
+
   Future<void> _showSuccessAndReset() async {
     showCupertinoDialog(
       context: context,
@@ -157,7 +170,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
 
     if (mounted) {
       Navigator.of(context, rootNavigator: true).pop(); // Tutup dialog
-      _resetForm(); 
+      _resetForm();
     }
   }
 
@@ -168,14 +181,22 @@ class _AddRecipePageState extends State<AddRecipePage> {
       _timesController.clear();
       _servingsController.clear();
       _image = null;
-      _selectedDifficulty = 'MD';
+      _selectedDifficulty = 'Medium';
       _selectedCategoryIds.clear();
 
-      for (var controller in _ingredientControllers) { controller.dispose(); }
-      _ingredientControllers = [RecipeIngredientController()];
-      
-      for (var controller in _instructionControllers) { controller.dispose(); }
-      _instructionControllers = [TextEditingController()];
+      for (var controller in _ingredientControllers) {
+        controller.dispose();
+      }
+      _ingredientControllers = [
+        RecipeIngredientController()
+      ];
+
+      for (var controller in _instructionControllers) {
+        controller.dispose();
+      }
+      _instructionControllers = [
+        TextEditingController()
+      ];
     });
   }
 
@@ -188,7 +209,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
       });
     }
   }
-  
+
   void _addInstructionField() => setState(() => _instructionControllers.add(TextEditingController()));
   void _removeInstructionField(int index) {
     if (_instructionControllers.length > 1) {
@@ -205,7 +226,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
       setState(() => _image = File(pickedFile.path));
     }
   }
-  
+
   void _showErrorSnackbar(String msg) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
 
   // --- UI BUILD METHODS ---
@@ -215,7 +236,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         middle: const Text('Add New Recipe'),
-         trailing: CupertinoButton(
+        trailing: CupertinoButton(
           padding: EdgeInsets.zero,
           onPressed: _isLoading ? null : _submitRecipe,
           child: _isLoading ? const CupertinoActivityIndicator() : const Text('Save'),
@@ -225,7 +246,8 @@ class _AddRecipePageState extends State<AddRecipePage> {
         child: ListView(
           padding: const EdgeInsets.all(16.0),
           children: [
-            _buildImagePicker(), const SizedBox(height: 24),
+            _buildImagePicker(),
+            const SizedBox(height: 24),
             _buildSectionTitle('Recipe Details'),
             _buildTextField(_nameController, 'Recipe Name'),
             _buildTextField(_descriptionController, 'Description', maxLines: 3),
@@ -236,15 +258,11 @@ class _AddRecipePageState extends State<AddRecipePage> {
                 Expanded(child: _buildTextField(_timesController, 'Time (min)', keyboardType: TextInputType.number)),
               ],
             ),
-            _buildPickerField('Difficulty', _difficultyOptions[_selectedDifficulty] ?? 'Medium', _difficultyOptions.values.toList(),
-                (v) => setState(() => _selectedDifficulty = _difficultyOptions.keys.firstWhere((k) => _difficultyOptions[k] == v, orElse: () => 'MD'))),
-            _buildMultiSelectPickerField(
-                'Categories', _getSelectedCategoryNames().isNotEmpty ? _getSelectedCategoryNames() : 'Select categories', _showCategorySelectionDialog),
-            
+            _buildPickerField('Difficulty', _difficultyOptions[_selectedDifficulty] ?? 'Medium', _difficultyOptions.values.toList(), (v) => setState(() => _selectedDifficulty = _difficultyOptions.keys.firstWhere((k) => _difficultyOptions[k] == v, orElse: () => 'MD'))),
+            _buildMultiSelectPickerField('Categories', _getSelectedCategoryNames().isNotEmpty ? _getSelectedCategoryNames() : 'Select categories', _showCategorySelectionDialog),
             const SizedBox(height: 24),
             _buildSectionTitle('Ingredients'),
             _buildIngredientSection(),
-            
             const SizedBox(height: 24),
             _buildSectionTitle('Instructions'),
             ..._buildInstructionFields(),
@@ -253,11 +271,9 @@ class _AddRecipePageState extends State<AddRecipePage> {
       ),
     );
   }
-  
+
   Widget _buildSectionTitle(String title) {
-    return Padding(
-        padding: const EdgeInsets.only(bottom: 12.0, top: 16.0),
-        child: Text(title, style: AppTheme.subheadingStyle.copyWith(fontWeight: FontWeight.bold)));
+    return Padding(padding: const EdgeInsets.only(bottom: 12.0, top: 16.0), child: Text(title, style: AppTheme.subheadingStyle.copyWith(fontWeight: FontWeight.bold)));
   }
 
   Widget _buildImagePicker() {
@@ -266,15 +282,14 @@ class _AddRecipePageState extends State<AddRecipePage> {
       child: Container(
         height: 200,
         width: double.infinity,
-        decoration: BoxDecoration(
-            color: CupertinoColors.systemGrey5,
-            borderRadius: BorderRadius.circular(12),
-            image: _image != null ? DecorationImage(image: FileImage(_image!), fit: BoxFit.cover) : null),
+        decoration: BoxDecoration(color: CupertinoColors.systemGrey5, borderRadius: BorderRadius.circular(12), image: _image != null ? DecorationImage(image: FileImage(_image!), fit: BoxFit.cover) : null),
         child: _image == null
-            ? const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Icon(CupertinoIcons.photo_camera, size: 50, color: CupertinoColors.systemGrey),
-                  SizedBox(height: 8), Text('Tap to select an image'),
-                ]))
+            ? const Center(
+                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(CupertinoIcons.photo_camera, size: 50, color: CupertinoColors.systemGrey),
+                SizedBox(height: 8),
+                Text('Tap to select an image'),
+              ]))
             : null,
       ),
     );
@@ -321,17 +336,14 @@ class _AddRecipePageState extends State<AddRecipePage> {
               color: CupertinoColors.systemGrey6,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               onPressed: () async {
-                  final selected = await Navigator.push<RecordModel>(context,
-                      CupertinoPageRoute(builder: (context) => const SelectIngredientPage()));
-                  if (selected != null && mounted) {
-                    setState(() => controller.selectedIngredient = selected);
-                  }
+                final selected = await Navigator.push<RecordModel>(context, CupertinoPageRoute(builder: (context) => const SelectIngredientPage()));
+                if (selected != null && mounted) {
+                  setState(() => controller.selectedIngredient = selected);
+                }
               },
               child: Text(
                 ingredientName,
-                style: TextStyle(
-                    color: controller.selectedIngredient != null ? CupertinoColors.label.resolveFrom(context) : CupertinoColors.placeholderText.resolveFrom(context),
-                    overflow: TextOverflow.ellipsis),
+                style: TextStyle(color: controller.selectedIngredient != null ? CupertinoColors.label.resolveFrom(context) : CupertinoColors.placeholderText.resolveFrom(context), overflow: TextOverflow.ellipsis),
               ),
             ),
           ),
@@ -383,10 +395,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
 
   String _getSelectedCategoryNames() {
     if (_selectedCategoryIds.isEmpty) return '';
-    return _categories
-        .where((c) => _selectedCategoryIds.contains(c.id))
-        .map((c) => c.data['name'].toString())
-        .join(', ');
+    return _categories.where((c) => _selectedCategoryIds.contains(c.id)).map((c) => c.data['name'].toString()).join(', ');
   }
 
   Widget _buildPickerField(String title, String currentValue, List<String> options, ValueChanged<String> onChanged) {
@@ -423,11 +432,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
           children: [
             Text(title, style: CupertinoTheme.of(context).textTheme.textStyle),
             const SizedBox(width: 16),
-            Expanded(
-                child: Text(currentValue,
-                    textAlign: TextAlign.end,
-                    style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(color: CupertinoColors.systemGrey),
-                    overflow: TextOverflow.ellipsis)),
+            Expanded(child: Text(currentValue, textAlign: TextAlign.end, style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(color: CupertinoColors.systemGrey), overflow: TextOverflow.ellipsis)),
             const SizedBox(width: 8),
             const Icon(CupertinoIcons.chevron_up_chevron_down, size: 16, color: CupertinoColors.systemGrey),
           ],
@@ -438,16 +443,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
 
   void _showPicker(BuildContext context, List<String> items, ValueChanged<int> onSelectedItemChanged) {
     final initialIndex = items.indexOf(_difficultyOptions[_selectedDifficulty]!);
-    showCupertinoModalPopup(
-        context: context,
-        builder: (_) => Container(
-            height: 250,
-            color: CupertinoColors.systemBackground.resolveFrom(context),
-            child: CupertinoPicker(
-                scrollController: FixedExtentScrollController(initialItem: initialIndex >= 0 ? initialIndex : 0),
-                itemExtent: 32.0,
-                onSelectedItemChanged: onSelectedItemChanged,
-                children: items.map((item) => Center(child: Text(item))).toList())));
+    showCupertinoModalPopup(context: context, builder: (_) => Container(height: 250, color: CupertinoColors.systemBackground.resolveFrom(context), child: CupertinoPicker(scrollController: FixedExtentScrollController(initialItem: initialIndex >= 0 ? initialIndex : 0), itemExtent: 32.0, onSelectedItemChanged: onSelectedItemChanged, children: items.map((item) => Center(child: Text(item))).toList())));
   }
 
   void _showCategorySelectionDialog() {
@@ -479,8 +475,8 @@ class _AddRecipePageState extends State<AddRecipePage> {
             cancelButton: CupertinoActionSheetAction(
                 isDefaultAction: true,
                 onPressed: () {
-                    Navigator.pop(context);
-                    setState(() {});
+                  Navigator.pop(context);
+                  setState(() {});
                 },
                 child: const Text('Done')),
           );

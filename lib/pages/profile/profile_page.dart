@@ -4,7 +4,7 @@ import 'package:cookmate2/config/theme.dart';
 import 'package:cookmate2/models/user.dart';
 import 'package:cookmate2/services/user_service.dart';
 import 'package:cookmate2/pages/auth/login_page.dart';
-import 'package:cookmate2/pages/profile/recipes_page.dart'; 
+import 'package:cookmate2/pages/profile/recipes_page.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -88,7 +88,10 @@ class _ProfilePageState extends State<ProfilePage> {
         'bio': _bioController.text,
       };
 
-      final (success, error) = await _userService.updateUser(data);
+      final (
+        success,
+        error
+      ) = await _userService.updateUser(data);
 
       setState(() {
         isLoading = false;
@@ -168,10 +171,12 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     final profileImageUrl = currentUser!.profileImage != null && currentUser!.profileImage!.isNotEmpty
-        ? PocketBaseClient.instance.files.getUrl(
-            PocketBaseClient.instance.authStore.model as RecordModel,
-            currentUser!.profileImage!,
-          ).toString()
+        ? PocketBaseClient.instance.files
+            .getUrl(
+              PocketBaseClient.instance.authStore.model as RecordModel,
+              currentUser!.profileImage!,
+            )
+            .toString()
         : null;
 
     return CupertinoPageScaffold(

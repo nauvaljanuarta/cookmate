@@ -31,7 +31,7 @@ class _MealPlanPageState extends State<MealPlanPage> {
     if (plan.dayId == newDayId) {
       return;
     }
-    
+
     try {
       await _mealPlanService.updateMealPlanDay(plan.id, newDayId);
       _refreshPage();
@@ -75,7 +75,7 @@ class _MealPlanPageState extends State<MealPlanPage> {
                     return DayMealPlanRow(
                       key: ValueKey(day.id),
                       day: day,
-                      onCardDropped: _handleCardDrop, 
+                      onCardDropped: _handleCardDrop,
                       onPlanUpdated: _refreshPage,
                     );
                   },

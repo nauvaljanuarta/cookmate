@@ -15,7 +15,6 @@ class EditableRecipeCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  // Fungsi untuk menampilkan menu aksi (Edit/Delete)
   void _showActionSheet(BuildContext context) {
     showCupertinoModalPopup(
       context: context,
@@ -26,7 +25,7 @@ class EditableRecipeCard extends StatelessWidget {
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(context);
-              onEdit(); // Memanggil fungsi onEdit dari parent
+              onEdit(); 
             },
             child: const Text('Recipe edit'),
           ),
@@ -34,7 +33,7 @@ class EditableRecipeCard extends StatelessWidget {
             isDestructiveAction: true,
             onPressed: () {
               Navigator.pop(context);
-              onDelete(); // Memanggil fungsi onDelete dari parent
+              onDelete(); 
             },
             child: const Text('Recipe Delete'),
           ),

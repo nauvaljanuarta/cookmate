@@ -72,7 +72,7 @@ class _RecipesPageState extends State<RecipesPage> {
             isDestructiveAction: true,
             child: const Text('Delete'),
             onPressed: () async {
-              Navigator.of(context).pop(); 
+              Navigator.of(context).pop();
               try {
                 await _recipeService.deleteRecipe(recipeId);
                 _showFeedbackDialog('Success', 'Recipe Deleted');
@@ -119,13 +119,13 @@ class _RecipesPageState extends State<RecipesPage> {
                     onPressed: () {
                       Navigator.of(context)
                           .push(
-                            CupertinoPageRoute(builder: (context) => const AddRecipePage()),
-                          )
+                        CupertinoPageRoute(builder: (context) => const AddRecipePage()),
+                      )
                           .then((value) {
-                            if (value == true) {
-                              _refreshRecipes();
-                            }
-                          });
+                        if (value == true) {
+                          _refreshRecipes();
+                        }
+                      });
                     },
                     child: const Text(
                       'Create Your First Recipe',
@@ -158,11 +158,13 @@ class _RecipesPageState extends State<RecipesPage> {
                     );
                   },
                   onEdit: () {
-                    Navigator.of(context).push<bool>(
+                    Navigator.of(context)
+                        .push<bool>(
                       CupertinoPageRoute(
                         builder: (context) => EditRecipePage(recipe: recipe),
                       ),
-                    ).then((result) {
+                    )
+                        .then((result) {
                       // Refresh jika halaman edit mengembalikan `true`
                       if (result == true) {
                         _refreshRecipes();
