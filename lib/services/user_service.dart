@@ -146,27 +146,34 @@ class UserService {
     _clearAuthToken();
   }
 
-  Future<
-      (
-        bool,
-        String?
-      )> updateUser(Map<String, dynamic> data) async {
+  Future<(bool, String?)> updateUser(
+    Map<String, dynamic> data, {
+    File? profileImage,
+  }) async {
     final user = getCurrentUser();
     if (user == null) {
       print('Update gagal: Tidak ada pengguna yang login');
-      return (
-        false,
-        'Tidak ada pengguna yang login'
-      );
+      return (false, 'Tidak ada pengguna yang login');
     }
     try {
-      print('Mengirim request update user: $data');
-      await PocketBaseClient.instance.collection('users').update(user.id, body: data);
+      print('Mengirim request update user dengan data: $data dan file: ${profileImage?.path}');
+
+      await PocketBaseClient.instance.collection('users').update(
+            user.id,
+            body: data,
+            files: profileImage == null
+                ? <http.MultipartFile>[] 
+                : [
+                    await http.MultipartFile.fromPath(
+                      'profileImage',
+                      profileImage.path,
+                      filename: 'profile_${user.id}.jpg',
+                    ),
+                  ],
+          );
+          
       print('Update user berhasil');
-      return (
-        true,
-        null
-      );
+      return (true, null);
     } catch (e) {
       print('Error saat update user: $e');
       String errorMessage;
@@ -175,12 +182,11 @@ class UserService {
       } else {
         errorMessage = 'Gagal update user: ${e.toString()}';
       }
-      return (
-        false,
-        errorMessage
-      );
+      return (false, errorMessage);
     }
   }
+
+
 
   Future<String> testConnection() async {
     try {
